@@ -2,6 +2,7 @@ certifi==2024.12.14
 charset-normalizer==3.4.1
 idna==3.10
 psycopg2==2.9.10
+pysolr==3.10.0
 requests==2.32.3
+setuptools==75.8.0
 urllib3==2.3.0
-argparse==1.4.0
