@@ -172,6 +172,6 @@ class Gene:
             'ncbi_gene_id': self.__ncbi_gene_id,
             'ensembl_gene_id': self.__ensembl_gene_id,
             'uniprot_id': self.__uniprot_id,
-            'pubmed_id': self.__pubmed_id,
+            # 'pubmed_id': self.__pubmed_id,
             'primary_id': self.__primary_id
         }
