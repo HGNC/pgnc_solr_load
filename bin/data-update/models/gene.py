@@ -4,19 +4,19 @@ class Gene:
         self.__pgnc_id: int = None
         self.__taxon_id: int = None
         self.__chromosome: str = None
-        self.__gene_symbol: str = None
-        self.__gene_name: str = None
+        self.__gene_symbol_string: str = None
+        self.__gene_name_string: str = None
         self.__locus_type: list[str] = None
         self.__status: str = None
-        self.__alias_gene_symbol: list[str] = None
-        self.__alias_gene_name: list[str] = None
-        self.__prev_gene_symbol: list[str] = None
-        self.__prev_gene_name: list[str] = None
+        self.__alias_gene_symbol_string: list[str] = None
+        self.__alias_gene_name_string: list[str] = None
+        self.__prev_gene_symbol_string: list[str] = None
+        self.__prev_gene_name_string: list[str] = None
         self.__phytozome_id: list[str] = None
         self.__ncbi_gene_id: list[int] = None
         self.__ensembl_gene_id: list[str] = None
         self.__uniprot_id: list[str] = None
-        self.__pubmed_id: list[int] = None
+        # self.__pubmed_id: list[int] = None
         self.__primary_id: str = None
 
     @property
@@ -52,20 +52,20 @@ class Gene:
         self.__chromosome = value
 
     @property
-    def gene_symbol(self):
-        return self.__gene_symbol
+    def gene_symbol_string(self):
+        return self.__gene_symbol_string
 
-    @gene_symbol.setter
-    def gene_symbol(self, value: list[str]):
-        self.__gene_symbol = value
+    @gene_symbol_string.setter
+    def gene_symbol_string(self, value: list[str]):
+        self.__gene_symbol_string = value
 
     @property
-    def gene_name(self):
-        return self.__gene_name
+    def gene_name_string(self):
+        return self.__gene_name_string
 
-    @gene_name.setter
-    def gene_name(self, value: list[str]):
-        self.__gene_name = value
+    @gene_name_string.setter
+    def gene_name_string(self, value: list[str]):
+        self.__gene_name_string = value
 
     @property
     def locus_types(self):
@@ -84,36 +84,36 @@ class Gene:
         self.__status = value
 
     @property
-    def alias_gene_symbol(self):
-        return self.__alias_gene_symbol
+    def alias_gene_symbol_string(self):
+        return self.__alias_gene_symbol_string
 
-    @alias_gene_symbol.setter
-    def alias_gene_symbol(self, value: list[str]):
-        self.__alias_gene_symbol = value
-
-    @property
-    def alias_gene_name(self):
-        return self.__alias_gene_name
-
-    @alias_gene_name.setter
-    def alias_gene_name(self, value: list[str]):
-        self.__alias_gene_name = value
+    @alias_gene_symbol_string.setter
+    def alias_gene_symbol_string(self, value: list[str]):
+        self.__alias_gene_symbol_string = value
 
     @property
-    def prev_gene_symbol(self):
-        return self.__prev_gene_symbol
+    def alias_gene_name_string(self):
+        return self.__alias_gene_name_string
 
-    @prev_gene_symbol.setter
-    def prev_gene_symbol(self, value: list[str]):
-        self.__prev_gene_symbol = value
+    @alias_gene_name_string.setter
+    def alias_gene_name_string(self, value: list[str]):
+        self.__alias_gene_name_string = value
 
     @property
-    def prev_gene_name(self):
-        return self.__prev_gene_name
+    def prev_gene_symbol_string(self):
+        return self.__prev_gene_symbol_string
 
-    @prev_gene_name.setter
-    def prev_gene_name(self, value: list[str]):
-        self.__prev_gene_name = value
+    @prev_gene_symbol_string.setter
+    def prev_gene_symbol_string(self, value: list[str]):
+        self.__prev_gene_symbol_string = value
+
+    @property
+    def prev_gene_name_string(self):
+        return self.__prev_gene_name_string
+
+    @prev_gene_name_string.setter
+    def prev_gene_name_string(self, value: list[str]):
+        self.__prev_gene_name_string = value
 
     @property
     def phytozome_id(self):
@@ -147,27 +147,27 @@ class Gene:
     def uniprot_id(self, value: list[str]):
         self.__uniprot_id = value
 
-    @property
-    def pubmed_id(self):
-        return self.__pubmed_id
+    # @property
+    # def pubmed_id(self):
+    #     return self.__pubmed_id
 
-    @pubmed_id.setter
-    def pubmed_id(self, value: list[int]):
-        self.__pubmed_id = value
+    # @pubmed_id.setter
+    # def pubmed_id(self, value: list[int]):
+    #     self.__pubmed_id = value
 
     def to_dict(self) -> dict:
         return {
             'pgnc_id': f'PGNC:{self.__pgnc_id}',
             'taxon_id': self.__taxon_id,
             'chromosome': self.__chromosome,
-            'gene_symbol': self.__gene_symbol,
-            'gene_name': self.__gene_name,
+            'gene_symbol_string': self.__gene_symbol_string,
+            'gene_name_string': self.__gene_name_string,
             'locus_type': self.__locus_type,
             'status': self.__status,
-            'alias_gene_symbol': self.__alias_gene_symbol,
-            'alias_gene_name': self.__alias_gene_name,
-            'prev_gene_symbol': self.__prev_gene_symbol,
-            'prev_gene_name': self.__prev_gene_name,
+            'alias_gene_symbol_string': self.__alias_gene_symbol_string,
+            'alias_gene_name_string': self.__alias_gene_name_string,
+            'prev_gene_symbol_string': self.__prev_gene_symbol_string,
+            'prev_gene_name_string': self.__prev_gene_name_string,
             'phytozome_id': self.__phytozome_id,
             'ncbi_gene_id': self.__ncbi_gene_id,
             'ensembl_gene_id': self.__ensembl_gene_id,

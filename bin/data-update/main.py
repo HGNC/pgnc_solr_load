@@ -151,18 +151,18 @@ def create_solr_json() -> str:
         solr_dicts: list[dict] = []
         for gene in genes:
             symbols = get_symbols_for_gene(connection, gene.pgnc_id)
-            gene.alias_gene_symbol = symbols['alias']
-            gene.prev_gene_symbol = symbols['prev']
-            gene.gene_symbol = symbols['approved']
+            gene.alias_gene_symbol_string = symbols['alias']
+            gene.prev_gene_symbol_string = symbols['prev']
+            gene.gene_symbol_string = symbols['approved']
             names = get_names_for_gene(connection, gene.pgnc_id)
-            gene.alias_gene_name = names['alias']
-            gene.prev_gene_name = names['prev']
-            gene.gene_name = names['approved']
+            gene.alias_gene_name_string = names['alias']
+            gene.prev_gene_name_string = names['prev']
+            gene.gene_name_string = names['approved']
             gene.locus_types = get_locus_types_for_gene(connection, gene.pgnc_id)
             xrefs = get_xrefs_for_gene(connection, gene.pgnc_id)
             gene.ensembl_gene_id = xrefs.get('Ensembl Gene', None)
             gene.ncbi_gene_id = xrefs.get('NCBI Gene', None)
-            gene.pubmed_id = xrefs.get('PubMed', None)
+            # gene.pubmed_id = xrefs.get('PubMed', None)
             gene.uniprot_id = xrefs.get('UniProt', None)
             gene.phytozome_id = xrefs.get('Phytozome', None)
             if gene.phytozome_id is not None:
