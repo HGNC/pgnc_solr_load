@@ -15,7 +15,17 @@ class SolrUpdateError(Exception):
     """Exception raised for errors during Solr update operations."""
     pass
 
-def get_xrefs_for_gene(connection: psycopg2.extensions.connection, gene_id: int) -> dict:
+
+RETRIES = 3
+RETRY_CODES = [
+    HTTPStatus.TOO_MANY_REQUESTS,
+    HTTPStatus.INTERNAL_SERVER_ERROR, 
+    HTTPStatus.BAD_GATEWAY,
+    HTTPStatus.SERVICE_UNAVAILABLE,
+    HTTPStatus.GATEWAY_TIMEOUT,
+]
+
+def __get_xrefs_for_gene(connection: psycopg2.extensions.connection, gene_id: int) -> dict:
     xref_sql = """
         select x.display_id, er.name
         from gene_has_xref ghx
@@ -35,7 +45,7 @@ def get_xrefs_for_gene(connection: psycopg2.extensions.connection, gene_id: int)
     return xrefs
 
 
-def get_locus_types_for_gene(connection: psycopg2.extensions.connection, gene_id: int) -> list[str]:
+def __get_locus_types_for_gene(connection: psycopg2.extensions.connection, gene_id: int) -> list[str]:
     locus_types_sql = """
         select locus_type.name
         from gene_has_locus_type
@@ -52,7 +62,7 @@ def get_locus_types_for_gene(connection: psycopg2.extensions.connection, gene_id
     return locus_types
 
 
-def get_symbols_for_gene(connection: psycopg2.extensions.connection, gene_id: int) -> dict:
+def __get_symbols_for_gene(connection: psycopg2.extensions.connection, gene_id: int) -> dict:
     symbols_sql = """
         select symbol.symbol, gene_has_symbol.type
         from gene_has_symbol
@@ -77,7 +87,7 @@ def get_symbols_for_gene(connection: psycopg2.extensions.connection, gene_id: in
     return symbol_dict
 
 
-def get_names_for_gene(connection: psycopg2.extensions.connection, gene_id: int) -> dict:
+def __get_names_for_gene(connection: psycopg2.extensions.connection, gene_id: int) -> dict:
     names_sql = """
         select name.name, gene_has_name.type
         from gene_has_name
@@ -101,7 +111,7 @@ def get_names_for_gene(connection: psycopg2.extensions.connection, gene_id: int)
     return name_dict
 
 
-def get_genes(connection: psycopg2.extensions.connection) -> list[Gene]:
+def __get_genes(connection: psycopg2.extensions.connection) -> list[Gene]:
     genes_sql = """
         select gene.id, gene.taxon_id, gene.status, location.name as chromosome
         from gene
@@ -125,7 +135,7 @@ def get_genes(connection: psycopg2.extensions.connection) -> list[Gene]:
     return genes
 
 
-def remove_empty_keys(d: dict) -> dict:
+def __remove_empty_keys(d: dict) -> dict:
     for k in list(d.keys()):
         if not d[k]:
             del d[k]
@@ -133,11 +143,11 @@ def remove_empty_keys(d: dict) -> dict:
             if len(d[k]) == 0:
                 del d[k]
         elif isinstance(d[k], dict):
-            remove_empty_keys(d[k])
+            __remove_empty_keys(d[k])
     return d
 
 
-def create_solr_json() -> str:
+def __create_solr_json() -> str:
     solr_json = None
     try:
         connection = psycopg2.connect(
@@ -147,19 +157,19 @@ def create_solr_json() -> str:
             port=os.environ['DB_PORT'],
             database=os.environ['DB_NAME']
         )
-        genes = get_genes(connection)
+        genes = __get_genes(connection)
         solr_dicts: list[dict] = []
         for gene in genes:
-            symbols = get_symbols_for_gene(connection, gene.pgnc_id)
+            symbols = __get_symbols_for_gene(connection, gene.pgnc_id)
             gene.alias_gene_symbol_string = symbols['alias']
             gene.prev_gene_symbol_string = symbols['prev']
             gene.gene_symbol_string = symbols['approved']
-            names = get_names_for_gene(connection, gene.pgnc_id)
+            names = __get_names_for_gene(connection, gene.pgnc_id)
             gene.alias_gene_name_string = names['alias']
             gene.prev_gene_name_string = names['prev']
             gene.gene_name_string = names['approved']
-            gene.locus_types = get_locus_types_for_gene(connection, gene.pgnc_id)
-            xrefs = get_xrefs_for_gene(connection, gene.pgnc_id)
+            gene.locus_types = __get_locus_types_for_gene(connection, gene.pgnc_id)
+            xrefs = __get_xrefs_for_gene(connection, gene.pgnc_id)
             gene.ensembl_gene_id = xrefs.get('Ensembl Gene', None)
             gene.ncbi_gene_id = xrefs.get('NCBI Gene', None)
             # gene.pubmed_id = xrefs.get('PubMed', None)
@@ -169,7 +179,7 @@ def create_solr_json() -> str:
                 gene.primary_id = xrefs['Phytozome'][0]
             else:
                 gene.primary_id = gene.pgnc_id
-            solr_dicts.append(remove_empty_keys(gene.to_dict()))
+            solr_dicts.append(__remove_empty_keys(gene.to_dict()))
         if len(solr_dicts) < 1:
             raise SolrUpdateError("No gene data found to index in Solr")
         solr_json = json.dumps(solr_dicts, indent=4)
@@ -192,43 +202,57 @@ def __parse_solr_response(e: pysolr.SolrError) -> HTTPStatus:
         raise SolrUpdateError(f'Function: __parse_solr_response Error: {e}')
 
 
-def upload_to_solr(solr_json: str, dry_run: bool) -> None:
+def __upload_to_solr(solr_json: str, dry_run: bool) -> None:
     if dry_run:
         print(solr_json)
     else:
-        retries = 3
-        retry_codes = [
-            HTTPStatus.TOO_MANY_REQUESTS,
-            HTTPStatus.INTERNAL_SERVER_ERROR,
-            HTTPStatus.BAD_GATEWAY,
-            HTTPStatus.SERVICE_UNAVAILABLE,
-            HTTPStatus.GATEWAY_TIMEOUT,
-        ]
         solr = pysolr.Solr('http://solr:8983/solr/pgnc', always_commit=True)
-        for i in range(retries):
+        for i in range(RETRIES):
             try:
                 solr.add(json.loads(solr_json))
                 break
             except pysolr.SolrError as e:
                 http_code = __parse_solr_response(e)
-                if http_code in retry_codes:
+                if http_code in RETRY_CODES:
                     print(f"HTTP {http_code} error. Retrying in 5 seconds...")
                     time.sleep(5)
                     retries -= 1
                     if retries == 0:
-                        raise e
+                        raise SolrUpdateError(f'Function: __upload_to_solr, Retries: 0, Error: {e}')
                     continue
                 else:
-                    raise e
+                    raise SolrUpdateError(f'Function: __upload_to_solr, Code: {http_code}, Error: {e}')
         print("Successfully updated Solr index")
+
+def __clear_solr_index() -> None:
+    solr = pysolr.Solr('http://solr:8983/solr/pgnc', always_commit=True)
+    for i in range(RETRIES):
+        try:
+            solr.delete(q='*:*')
+            print("Successfully cleared Solr index")
+            break
+        except pysolr.SolrError as e:
+            http_code = __parse_solr_response(e)
+            if http_code in RETRY_CODES:
+                print(f"HTTP {http_code} error. Retrying in 5 seconds...")
+                time.sleep(5)
+                retries -= 1
+                if retries == 0:
+                    raise e
+                continue
+            else:
+                raise SolrUpdateError(f'Function: __clear_solr_index Error: {e}')
 
 def __main__():
     try:
         parser = argparse.ArgumentParser(description='Update Solr index with gene data')
         parser.add_argument('--dry-run', help='Dry run mode', action='store_true')
+        parser.add_argument('--clear', help='Clear Solr index', action='store_true')
         args = parser.parse_args()
-        solr_json = create_solr_json()
-        upload_to_solr(solr_json, args.dry_run)
+        solr_json = __create_solr_json()
+        if args.clear:
+            __clear_solr_index()
+        __upload_to_solr(solr_json, args.dry_run)
     except SolrUpdateError as e:
         print(f"Error {type(e)} (__main__): {e}")
 
