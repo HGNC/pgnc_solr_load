@@ -1,1 +1,1 @@
-python ./data-update/main.py 2>&1 | tee output.log
+python ./data-update/main.py --clear 2>&1 | tee output.log
