@@ -92,7 +92,7 @@ def __get_names_for_gene(connection: psycopg2.extensions.connection, gene_id: in
         select name.name, gene_has_name.type
         from gene_has_name
         join name on gene_has_name.name_id = name.id
-        where gene_has_name.name_id = %s
+        where gene_has_name.gene_id = %s
     """
     name_dict = {
         'approved': None,
