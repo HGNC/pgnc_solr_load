@@ -207,6 +207,7 @@ def __upload_to_solr(solr_json: str, dry_run: bool) -> None:
         print(solr_json)
     else:
         solr = pysolr.Solr('http://solr:8983/solr/pgnc', always_commit=True)
+        retries_remaining = RETRIES
         for i in range(RETRIES):
             try:
                 solr.add(json.loads(solr_json))
@@ -216,8 +217,8 @@ def __upload_to_solr(solr_json: str, dry_run: bool) -> None:
                 if http_code in RETRY_CODES:
                     print(f"HTTP {http_code} error. Retrying in 5 seconds...")
                     time.sleep(5)
-                    retries -= 1
-                    if retries == 0:
+                    retries_remaining -= 1
+                    if retries_remaining == 0:
                         raise SolrUpdateError(f'Function: __upload_to_solr, Retries: 0, Error: {e}')
                     continue
                 else:
@@ -226,6 +227,7 @@ def __upload_to_solr(solr_json: str, dry_run: bool) -> None:
 
 def __clear_solr_index() -> None:
     solr = pysolr.Solr('http://solr:8983/solr/pgnc', always_commit=True)
+    retries_remaining = RETRIES
     for i in range(RETRIES):
         try:
             solr.delete(q='*:*')
@@ -236,8 +238,8 @@ def __clear_solr_index() -> None:
             if http_code in RETRY_CODES:
                 print(f"HTTP {http_code} error. Retrying in 5 seconds...")
                 time.sleep(5)
-                retries -= 1
-                if retries == 0:
+                retries_remaining -= 1
+                if retries_remaining == 0:
                     raise e
                 continue
             else:
