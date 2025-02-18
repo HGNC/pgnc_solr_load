@@ -248,10 +248,15 @@ def __clear_solr_index() -> None:
 def __main__():
     try:
         parser = argparse.ArgumentParser(description='Update Solr index with gene data')
-        parser.add_argument('--dry-run', help='Dry run mode', action='store_true')
+        parser.add_argument('--dump', help='Dump Solr JSON to a file in output/', action='store_true')
+        parser.add_argument('--dry-run', help='Print Solr JSON to stdout instead of updating Solr', action='store_true')
         parser.add_argument('--clear', help='Clear Solr index', action='store_true')
         args = parser.parse_args()
         solr_json = __create_solr_json()
+        if args.dump:
+            with open('/usr/src/app/output/solr.json', 'w') as f:
+                f.write(solr_json)
+            return
         if args.clear:
             __clear_solr_index()
         __upload_to_solr(solr_json, args.dry_run)

@@ -15,6 +15,7 @@ COPY bin/update.sh ./update.sh
 
 # Make script executable
 RUN chmod +x ./data-update/main.py 
+RUN mkdir -p /usr/src/app/output
 
     # Run the script
 CMD ["/usr/bin/bash", "/usr/src/app/update.sh"]
