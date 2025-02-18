@@ -48,3 +48,4 @@ local_settings.py
 *.log
 
 output/
+!output/.gitkeep
