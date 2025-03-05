@@ -49,3 +49,6 @@ local_settings.py
 
 output/
 !output/.gitkeep
+
+input/
+!input/.gitkeep
