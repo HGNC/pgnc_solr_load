@@ -16,5 +16,9 @@ while [ ! -f /usr/src/app/output/solr-client-done.flag ]; do
   sleep 5
 done
 
+# while true; do
+#     sleep 180
+# done
+
 echo "solr-client completed. Stopping python container..."
 exit 0  # Exits the container

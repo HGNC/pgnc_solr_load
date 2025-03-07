@@ -11,4 +11,4 @@ urllib3==2.3.0
 # data load requirements
 numpy==2.2.3
 pandas==2.2.3
-gino==1.0.1
+SQLAlchemy==2.0.38
