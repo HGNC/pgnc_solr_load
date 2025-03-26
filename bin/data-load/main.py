@@ -1,15 +1,13 @@
 import argparse
-from typing import Literal
-import pandas
-import numpy as np
-import sqlalchemy as sa
 
+import pandas
+import sqlalchemy as sa
 from db.config import Config
 from db.enum_types.basic_status import BasicStatusEnum
 from db.enum_types.nomenclature import NomenclatureEnum
-from db.insert.gene_name import GeneName
 from db.insert.gene_location import GeneLocation
 from db.insert.gene_locus_type import GeneLocusType
+from db.insert.gene_name import GeneName
 from db.insert.gene_symbol import GeneSymbol
 from db.insert.gene_xref import GeneXref
 from db.models.gene import Gene
