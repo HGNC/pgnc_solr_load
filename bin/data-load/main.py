@@ -688,6 +688,22 @@ class GeneDataLoader:
 
 
 def dump_db(cmd: tuple[str, ...], file_name: str):
+    """
+    Dump database content to a gzipped file.
+    This function executes a database dump command as a subprocess and
+    writes its output to a gzipped file in the '/usr/src/app/db-data/' directory.
+    Args:
+        cmd (tuple[str, ...]): Command to execute as a subprocess.
+            This should be the database dump command and its arguments.
+        file_name (str): Name of the file where the output will be saved.
+            The file will be created in '/usr/src/app/db-data/'.
+    Returns:
+        None
+    Note:
+        The function assumes the provided command outputs text that can be encoded as UTF-8.
+        The subprocess's stdout is read line by line and written to the gzipped file.
+    """
+
     with gzip.open(f"/usr/src/app/db-data/{file_name}", "wb") as f:
         # with open("backup.sql", "w") as f:
         popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
