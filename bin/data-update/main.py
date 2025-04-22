@@ -1,18 +1,43 @@
 #!/usr/bin/env python
 
-import psycopg2
-import json
+"""
+PGNC Solr Index Update Utility.
+
+This script retrieves gene data from a PostgreSQL database and updates
+a Solr index with the processed information. It supports various operations
+including dumping the JSON to a file, clearing the Solr index, and performing
+dry-run operations to preview changes.
+
+Usage:
+    python main.py [--dump] [--dry-run] [--clear]
+
+Environment Variables:
+    DB_USER: PostgreSQL username
+    DB_PASSWORD: PostgreSQL password
+    DB_HOST: PostgreSQL host
+    DB_PORT: PostgreSQL port
+    DB_NAME: PostgreSQL database name
+"""
+
 import argparse
+import json
+import os
 import re
 import time
-import os
 from http import HTTPStatus
-import pysolr
 
+import psycopg2
+import pysolr
 from models.gene import Gene
 
+
 class SolrUpdateError(Exception):
-    """Exception raised for errors during Solr update operations."""
+    """Exception raised for errors during Solr update operations.
+
+    This custom exception is used to provide more specific error information
+    when Solr update operations fail.
+    """
+
     pass
 
 
@@ -25,7 +50,21 @@ RETRY_CODES = [
     HTTPStatus.GATEWAY_TIMEOUT,
 ]
 
-def __get_xrefs_for_gene(connection: psycopg2.extensions.connection, gene_id: int) -> dict:
+
+def __get_xrefs_for_gene(
+    connection: psycopg2.extensions.connection, gene_id: int
+) -> dict:
+    """
+    Retrieve cross-references for a specific gene from the database.
+
+    Args:
+        connection (psycopg2.extensions.connection): Active PostgreSQL database connection.
+        gene_id (int): The identifier of the gene to retrieve cross-references for.
+
+    Returns:
+        dict: A dictionary where keys are external resource names and values are
+            lists of display IDs associated with the gene.
+    """
     xref_sql = """
         select x.display_id, er.name
         from gene_has_xref ghx
@@ -45,7 +84,19 @@ def __get_xrefs_for_gene(connection: psycopg2.extensions.connection, gene_id: in
     return xrefs
 
 
-def __get_locus_types_for_gene(connection: psycopg2.extensions.connection, gene_id: int) -> list[str]:
+def __get_locus_types_for_gene(
+    connection: psycopg2.extensions.connection, gene_id: int
+) -> list[str]:
+    """
+    Retrieve locus types associated with a specific gene.
+
+    Args:
+        connection (psycopg2.extensions.connection): Active PostgreSQL database connection.
+        gene_id (int): The identifier of the gene to retrieve locus types for.
+
+    Returns:
+        list[str]: A list of locus type names associated with the gene.
+    """
     locus_types_sql = """
         select locus_type.name
         from gene_has_locus_type
@@ -62,7 +113,20 @@ def __get_locus_types_for_gene(connection: psycopg2.extensions.connection, gene_
     return locus_types
 
 
-def __get_symbols_for_gene(connection: psycopg2.extensions.connection, gene_id: int) -> dict:
+def __get_symbols_for_gene(
+    connection: psycopg2.extensions.connection, gene_id: int
+) -> dict:
+    """
+    Retrieve symbols (approved, alias, and previous) for a specific gene.
+
+    Args:
+        connection (psycopg2.extensions.connection): Active PostgreSQL database connection.
+        gene_id (int): The identifier of the gene to retrieve symbols for.
+
+    Returns:
+        dict: A dictionary containing approved, alias, and previous symbols for the gene.
+            Structure: {'approved': str, 'alias': list[str], 'prev': list[str]}
+    """
     symbols_sql = """
         select symbol.symbol, gene_has_symbol.type
         from gene_has_symbol
@@ -70,16 +134,12 @@ def __get_symbols_for_gene(connection: psycopg2.extensions.connection, gene_id: 
         on gene_has_symbol.symbol_id = symbol.id
         where gene_has_symbol.gene_id = %s
     """
-    symbol_dict: dict = {
-        'approved': None,
-        'alias': [],
-        'prev': []
-    }
+    symbol_dict: dict = {"approved": None, "alias": [], "prev": []}
     cursor = connection.cursor()
     cursor.execute(symbols_sql, (gene_id,))
     symbols = cursor.fetchall()
     for symbol in symbols:
-        if symbol[1] == 'approved':
+        if symbol[1] == "approved":
             symbol_dict[symbol[1]] = symbol[0]
         else:
             symbol_dict[symbol[1]].append(symbol[0])
@@ -87,23 +147,32 @@ def __get_symbols_for_gene(connection: psycopg2.extensions.connection, gene_id: 
     return symbol_dict
 
 
-def __get_names_for_gene(connection: psycopg2.extensions.connection, gene_id: int) -> dict:
+def __get_names_for_gene(
+    connection: psycopg2.extensions.connection, gene_id: int
+) -> dict:
+    """
+    Retrieve names (approved, alias, and previous) for a specific gene.
+
+    Args:
+        connection (psycopg2.extensions.connection): Active PostgreSQL database connection.
+        gene_id (int): The identifier of the gene to retrieve names for.
+
+    Returns:
+        dict: A dictionary containing approved, alias, and previous names for the gene.
+            Structure: {'approved': str, 'alias': list[str], 'prev': list[str]}
+    """
     names_sql = """
         select name.name, gene_has_name.type
         from gene_has_name
         join name on gene_has_name.name_id = name.id
         where gene_has_name.gene_id = %s
     """
-    name_dict = {
-        'approved': None,
-        'alias': [],
-        'prev': []
-    }
+    name_dict = {"approved": None, "alias": [], "prev": []}
     cursor = connection.cursor()
     cursor.execute(names_sql, (gene_id,))
     names = cursor.fetchall()
     for name in names:
-        if name[1] == 'approved':
+        if name[1] == "approved":
             name_dict[name[1]] = name[0]
         else:
             name_dict[name[1]].append(name[0])
@@ -112,6 +181,15 @@ def __get_names_for_gene(connection: psycopg2.extensions.connection, gene_id: in
 
 
 def __get_genes(connection: psycopg2.extensions.connection) -> list[Gene]:
+    """
+    Retrieve all genes with approved, withdrawn, merged, or split status from the database.
+
+    Args:
+        connection (psycopg2.extensions.connection): Active PostgreSQL database connection.
+
+    Returns:
+        list[Gene]: A list of Gene objects with basic information populated.
+    """
     genes_sql = """
         select gene.id, gene.taxon_id, gene.status, location.name as chromosome
         from gene
@@ -136,6 +214,15 @@ def __get_genes(connection: psycopg2.extensions.connection) -> list[Gene]:
 
 
 def __remove_empty_keys(d: dict) -> dict:
+    """
+    Recursively remove empty keys from a dictionary.
+
+    Args:
+        d (dict): The dictionary to clean.
+
+    Returns:
+        dict: The dictionary with empty keys removed.
+    """
     for k in list(d.keys()):
         if not d[k]:
             del d[k]
@@ -148,35 +235,47 @@ def __remove_empty_keys(d: dict) -> dict:
 
 
 def __create_solr_json() -> str:
+    """
+    Create a JSON string representation of all gene data for Solr indexing.
+
+    This function connects to the database, retrieves all relevant gene data including
+    symbols, names, locus types, and cross-references, and formats it for Solr.
+
+    Returns:
+        str: A JSON string containing all gene data formatted for Solr.
+
+    Raises:
+        SolrUpdateError: If an error occurs during data retrieval or JSON creation.
+    """
     solr_json = None
     try:
         connection = psycopg2.connect(
-            user=os.environ['DB_USER'],
-            password=os.environ['DB_PASSWORD'],
-            host=os.environ['DB_HOST'],
-            port=os.environ['DB_PORT'],
-            database=os.environ['DB_NAME']
+            user=os.environ["DB_USER"],
+            password=os.environ["DB_PASSWORD"],
+            host=os.environ["DB_HOST"],
+            port=os.environ["DB_PORT"],
+            database=os.environ["DB_NAME"],
         )
         genes = __get_genes(connection)
         solr_dicts: list[dict] = []
         for gene in genes:
             symbols = __get_symbols_for_gene(connection, gene.pgnc_id)
-            gene.alias_gene_symbol_string = symbols['alias']
-            gene.prev_gene_symbol_string = symbols['prev']
-            gene.gene_symbol_string = symbols['approved']
+            gene.alias_gene_symbol_string = symbols["alias"]
+            gene.prev_gene_symbol_string = symbols["prev"]
+            gene.gene_symbol_string = symbols["approved"]
             names = __get_names_for_gene(connection, gene.pgnc_id)
-            gene.alias_gene_name_string = names['alias']
-            gene.prev_gene_name_string = names['prev']
-            gene.gene_name_string = names['approved']
+            gene.alias_gene_name_string = names["alias"]
+            gene.prev_gene_name_string = names["prev"]
+            gene.gene_name_string = names["approved"]
             gene.locus_types = __get_locus_types_for_gene(connection, gene.pgnc_id)
             xrefs = __get_xrefs_for_gene(connection, gene.pgnc_id)
-            gene.ensembl_gene_id = xrefs.get('Ensembl Gene', None)
-            gene.ncbi_gene_id = xrefs.get('NCBI Gene', None)
+            gene.ensembl_gene_id = xrefs.get("Ensembl Gene", None)
+            gene.ncbi_gene_id = xrefs.get("NCBI Gene", None)
             # gene.pubmed_id = xrefs.get('PubMed', None)
-            gene.uniprot_id = xrefs.get('UniProt', None)
-            gene.phytozome_id = xrefs.get('Phytozome', None)
+            gene.uniprot_id = xrefs.get("UniProt", None)
+            gene.phytozome_id = xrefs.get("Phytozome", None)
             if gene.phytozome_id is not None:
-                gene.primary_id = xrefs['Phytozome'][0]
+                gene.primary_id = xrefs["Phytozome"][0]
             else:
                 gene.primary_id = gene.pgnc_id
             solr_dicts.append(__remove_empty_keys(gene.to_dict()))
@@ -184,8 +283,8 @@ def __create_solr_json() -> str:
             raise SolrUpdateError("No gene data found to index in Solr")
         solr_json = json.dumps(solr_dicts, indent=4)
         return solr_json
-    except (SolrUpdateError) as error:
-        raise SolrUpdateError(f'Function: create_solr_json Error: {error}')
+    except SolrUpdateError as error:
+        raise SolrUpdateError(f"Function: create_solr_json Error: {error}")
     finally:
         # closing database connection.
         if connection:
@@ -194,19 +293,44 @@ def __create_solr_json() -> str:
 
 
 def __parse_solr_response(e: pysolr.SolrError) -> HTTPStatus:
+    """
+    Parse a Solr error response to extract the HTTP status code.
+
+    Args:
+        e (pysolr.SolrError): The Solr error to parse.
+
+    Returns:
+        HTTPStatus: The HTTP status code from the error.
+
+    Raises:
+        SolrUpdateError: If the HTTP status code cannot be extracted from the error.
+    """
     resp = str(e)
-    code_mtch = re.search(r'HTTP (\d{3})', resp)
+    code_mtch = re.search(r"HTTP (\d{3})", resp)
     if code_mtch.group(1):
         return HTTPStatus(int(code_mtch.group(1)))
     else:
-        raise SolrUpdateError(f'Function: __parse_solr_response Error: {e}')
+        raise SolrUpdateError(f"Function: __parse_solr_response Error: {e}")
 
 
 def __upload_to_solr(solr_json: str, dry_run: bool) -> None:
+    """
+    Upload the provided JSON data to Solr.
+
+    If dry_run is True, the JSON is printed to stdout instead of being uploaded.
+    Implements retry logic for certain HTTP error codes.
+
+    Args:
+        solr_json (str): The JSON string to upload to Solr.
+        dry_run (bool): If True, print the JSON instead of uploading.
+
+    Raises:
+        SolrUpdateError: If the upload fails after all retries.
+    """
     if dry_run:
         print(solr_json)
     else:
-        solr = pysolr.Solr('http://solr:8983/solr/pgnc', always_commit=True)
+        solr = pysolr.Solr("http://solr:8983/solr/pgnc", always_commit=True)
         retries_remaining = RETRIES
         for i in range(RETRIES):
             try:
@@ -219,18 +343,31 @@ def __upload_to_solr(solr_json: str, dry_run: bool) -> None:
                     time.sleep(5)
                     retries_remaining -= 1
                     if retries_remaining == 0:
-                        raise SolrUpdateError(f'Function: __upload_to_solr, Retries: 0, Error: {e}')
+                        raise SolrUpdateError(
+                            f"Function: __upload_to_solr, Retries: 0, Error: {e}"
+                        )
                     continue
                 else:
-                    raise SolrUpdateError(f'Function: __upload_to_solr, Code: {http_code}, Error: {e}')
+                    raise SolrUpdateError(
+                        f"Function: __upload_to_solr, Code: {http_code}, Error: {e}"
+                    )
         print("Successfully updated Solr index")
 
+
 def __clear_solr_index() -> None:
-    solr = pysolr.Solr('http://solr:8983/solr/pgnc', always_commit=True)
+    """
+    Clear all documents from the Solr index.
+
+    Implements retry logic for certain HTTP error codes.
+
+    Raises:
+        SolrUpdateError: If clearing the index fails after all retries.
+    """
+    solr = pysolr.Solr("http://solr:8983/solr/pgnc", always_commit=True)
     retries_remaining = RETRIES
     for i in range(RETRIES):
         try:
-            solr.delete(q='*:*')
+            solr.delete(q="*:*")
             print("Successfully cleared Solr index")
             break
         except pysolr.SolrError as e:
@@ -243,18 +380,41 @@ def __clear_solr_index() -> None:
                     raise e
                 continue
             else:
-                raise SolrUpdateError(f'Function: __clear_solr_index Error: {e}')
+                raise SolrUpdateError(f"Function: __clear_solr_index Error: {e}")
+
 
 def __main__():
+    """
+    Main entry point for the script.
+
+    Parses command line arguments and executes the appropriate operations:
+    - Dump: Save Solr JSON to a file
+    - Clear: Clear the Solr index
+    - Upload: Update the Solr index with gene data
+
+    Command line arguments:
+        --dump: Dump Solr JSON to a file in output/
+        --dry-run: Print Solr JSON to stdout instead of updating Solr
+        --clear: Clear Solr index
+
+    Raises:
+        SolrUpdateError: If an error occurs during execution.
+    """
     try:
-        parser = argparse.ArgumentParser(description='Update Solr index with gene data')
-        parser.add_argument('--dump', help='Dump Solr JSON to a file in output/', action='store_true')
-        parser.add_argument('--dry-run', help='Print Solr JSON to stdout instead of updating Solr', action='store_true')
-        parser.add_argument('--clear', help='Clear Solr index', action='store_true')
+        parser = argparse.ArgumentParser(description="Update Solr index with gene data")
+        parser.add_argument(
+            "--dump", help="Dump Solr JSON to a file in output/", action="store_true"
+        )
+        parser.add_argument(
+            "--dry-run",
+            help="Print Solr JSON to stdout instead of updating Solr",
+            action="store_true",
+        )
+        parser.add_argument("--clear", help="Clear Solr index", action="store_true")
         args = parser.parse_args()
         solr_json = __create_solr_json()
         if args.dump:
-            with open('/usr/src/app/output/solr.json', 'w') as f:
+            with open("/usr/src/app/output/solr.json", "w") as f:
                 f.write(solr_json)
             return
         if args.clear:

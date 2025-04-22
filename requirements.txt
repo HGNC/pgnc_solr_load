@@ -8,7 +8,7 @@ requests==2.32.3
 setuptools==75.8.0
 urllib3==2.3.0
 
-# data load requirements
+# data load extra requirements
 numpy==2.2.3
 pandas==2.2.3
 SQLAlchemy==2.0.38

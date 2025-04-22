@@ -1,7 +1,7 @@
 from typing import Literal
 
-from db.models.name import Name
 from db.models.gene_has_name import GeneHasName
+from db.models.name import Name
 
 
 class GeneName:
