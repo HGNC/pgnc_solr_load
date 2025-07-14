@@ -247,6 +247,7 @@ def __create_solr_json() -> str:
     Raises:
         SolrUpdateError: If an error occurs during data retrieval or JSON creation.
     """
+    connection = None
     solr_json = None
     try:
         connection = psycopg2.connect(
@@ -269,15 +270,17 @@ def __create_solr_json() -> str:
             gene.gene_name_string = names["approved"]
             gene.locus_types = __get_locus_types_for_gene(connection, gene.pgnc_id)
             xrefs = __get_xrefs_for_gene(connection, gene.pgnc_id)
-            gene.ensembl_gene_id = xrefs.get("Ensembl Gene", None)
-            gene.ncbi_gene_id = xrefs.get("NCBI Gene", None)
+            gene.ensembl_gene_id = xrefs.get("Ensembl Gene", [])
+            # Convert NCBI Gene IDs from strings to integers
+            ncbi_gene_ids = xrefs.get("NCBI Gene", [])
+            gene.ncbi_gene_id = [int(id_str) for id_str in ncbi_gene_ids] if ncbi_gene_ids else []
             # gene.pubmed_id = xrefs.get('PubMed', None)
-            gene.uniprot_id = xrefs.get("UniProt", None)
-            gene.phytozome_id = xrefs.get("Phytozome", None)
-            if gene.phytozome_id is not None:
+            gene.uniprot_id = xrefs.get("UniProt", [])
+            gene.phytozome_id = xrefs.get("Phytozome", [])
+            if gene.phytozome_id:
                 gene.primary_id = xrefs["Phytozome"][0]
             else:
-                gene.primary_id = gene.pgnc_id
+                gene.primary_id = str(gene.pgnc_id)
             solr_dicts.append(__remove_empty_keys(gene.to_dict()))
         if len(solr_dicts) < 1:
             raise SolrUpdateError("No gene data found to index in Solr")
@@ -307,7 +310,7 @@ def __parse_solr_response(e: pysolr.SolrError) -> HTTPStatus:
     """
     resp = str(e)
     code_mtch = re.search(r"HTTP (\d{3})", resp)
-    if code_mtch.group(1):
+    if code_mtch and code_mtch.group(1):
         return HTTPStatus(int(code_mtch.group(1)))
     else:
         raise SolrUpdateError(f"Function: __parse_solr_response Error: {e}")
@@ -424,4 +427,5 @@ def __main__():
         print(f"Error {type(e)} (__main__): {e}")
 
 
-__main__()
+if __name__ == "__main__":
+    __main__()

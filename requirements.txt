@@ -12,3 +12,8 @@ urllib3==2.3.0
 numpy==2.2.3
 pandas==2.2.3
 SQLAlchemy==2.0.38
+
+# testing requirements
+pytest==8.4.1
+pytest-cov==6.2.1
+pytest-mock==3.15.0
