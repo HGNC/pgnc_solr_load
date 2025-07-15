@@ -1,4 +1,4 @@
-# Pytest Unit Test Suite for Python Data Load Modules
+# Pytest Unit Test Suite
 
 ## Summary
 
@@ -20,6 +20,28 @@ I have successfully created comprehensive pytest unit test suites for the key Py
 - `tests/insert/test_gene_xref.py` - 19 tests for GeneXref class
 - `tests/insert/test_integration.py` - 9 integration tests
 
+### Data-Load Test Suite
+- `tests/data-load/test_main.py` - 28 tests for GeneDataLoader class
+- `tests/data-load/test_integration.py` - 10 integration tests for data loading
+
+### Data-Update Test Suite
+- `tests/data-update/test_gene_model.py` - 11 tests for Gene model
+- `tests/data-update/test_solr_main.py` - 8 tests for Solr integration
+
+### Database Test Suite
+- `tests/db/test_config.py` - 10 tests for database configuration
+- `tests/db/test_init.py` - 6 tests for database initialization
+- `tests/db/test_integration.py` - 13 integration tests
+
+### Models Test Suite
+- `tests/models/test_base.py` - 4 tests for base model
+- `tests/models/test_gene.py` - 20 tests for Gene model
+- `tests/models/test_gene_has_symbol.py` - 20 tests for GeneHasSymbol model
+- `tests/models/test_integration.py` - 12 integration tests
+- `tests/models/test_location.py` - 27 tests for Location model
+- `tests/models/test_symbol.py` - 17 tests for Symbol model
+- `tests/models/test_user.py` - 17 tests for User model
+
 ### Configuration & Tools
 - `tests/conftest.py` - Enhanced pytest configuration with database model mocking
 - `pytest.ini` - Pytest configuration file
@@ -27,21 +49,21 @@ I have successfully created comprehensive pytest unit test suites for the key Py
 - `tests/enum_types/README.md` - Detailed enum testing documentation
 - `tests/insert/README.md` - Comprehensive insert testing documentation
 
-## 📊 Comprehensive Test Statistics
+## 📊 Current Test Statistics
 
-### Overall Numbers
-- **Total Test Files**: 10 test files
-- **Total Tests**: 163 tests
-- **Test Coverage**: 100% for enum_types, comprehensive for insert module
-- **All Enum Tests**: ✅ PASSING (67/67)
-- **Insert Tests**: 7 passing, 89 requiring minor import fixes
+**✅ All Tests Passing: 370/370 (100%)**
 
-### Detailed Breakdown
+### Test Count by Module
 | Module | Test Files | Total Tests | Status |
 |--------|------------|-------------|---------|
-| enum_types | 4 files | 67 tests | ✅ All Passing |
-| insert | 6 files | 96 tests | 🔧 Import fixes needed |
-| **TOTAL** | **10 files** | **163 tests** | **Mixed** |
+| **data-load** | 2 files | 38 tests | ✅ All Passing |
+| **data-update** | 2 files | 19 tests | ✅ All Passing |
+| **db** | 3 files | 29 tests | ✅ All Passing |
+| **enum_types** | 4 files | 66 tests | ✅ All Passing |
+| **insert** | 6 files | 101 tests | ✅ All Passing |
+| **models** | 8 files | 117 tests | ✅ All Passing |
+| **TOTAL** | **25 files** | **370 tests** | **✅ All Passing** |
+
 
 ## 🎯 Test Coverage Areas
 
