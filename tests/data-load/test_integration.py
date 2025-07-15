@@ -186,13 +186,19 @@ class TestDataLoadIntegration:
                     
                     with patch('main.dump_db') as mock_dump_db:
                         with patch('builtins.print') as mock_print:
-                            main()
-                            
-                            # Verify the complete workflow
-                            mock_gene_data_loader.assert_called_once_with(temp_csv_path)
-                            mock_loader.process_data.assert_called_once()
-                            mock_dump_db.assert_called_once()
-                            mock_print.assert_any_call("Dumping database...")
+                            with patch.dict('main.os.environ', {
+                                'DB_HOST': 'localhost',
+                                'DB_PORT': '5432',
+                                'DB_USER': 'testuser',
+                                'DB_NAME': 'testdb'
+                            }):
+                                main()
+                                
+                                # Verify the complete workflow
+                                mock_gene_data_loader.assert_called_once_with(temp_csv_path)
+                                mock_loader.process_data.assert_called_once()
+                                mock_dump_db.assert_called_once()
+                                mock_print.assert_any_call("Dumping database...")
         
         finally:
             os.unlink(temp_csv_path)

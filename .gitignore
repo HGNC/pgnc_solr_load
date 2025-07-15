@@ -22,6 +22,7 @@ env/
 *.swo
 
 # Unit test / coverage reports
+htmlcov/
 .tox/
 .coverage
 .coverage.*

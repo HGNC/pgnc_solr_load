@@ -9,16 +9,46 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 
-# Add the data-load path to sys.path so we can import the main module
+# Store original sys.path to restore later
+_original_sys_path = sys.path.copy()
+
+# Setup paths
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 data_load_path = os.path.join(project_root, 'bin/data-load')
-if data_load_path not in sys.path:
-    sys.path.insert(0, data_load_path)
+data_update_path = os.path.join(project_root, 'bin/data-update')
 
-# Also add the db path for imports
-db_path = os.path.join(data_load_path, 'db')
-if db_path not in sys.path:
-    sys.path.insert(0, db_path)
+# Function to setup data-load imports
+def setup_data_load_imports():
+    # Clear any potentially interfering modules to avoid conflicts
+    modules_to_clear = [
+        'main', 'db', 'db.config', 'db.models', 'db.enum_types', 'db.insert'
+    ]
+    
+    for module in modules_to_clear:
+        if module in sys.modules:
+            del sys.modules[module]
+    
+    # Remove data-update path if it exists to avoid conflicts
+    if data_update_path in sys.path:
+        sys.path.remove(data_update_path)
+    
+    # Add data-load path
+    if data_load_path not in sys.path:
+        sys.path.insert(0, data_load_path)
+    
+    # Also add the db path for imports
+    db_path = os.path.join(data_load_path, 'db')
+    if db_path not in sys.path:
+        sys.path.insert(0, db_path)
+
+# Call setup function
+setup_data_load_imports()
+
+
+@pytest.fixture(autouse=True)
+def ensure_data_load_imports():
+    """Ensure data-load imports are properly configured before each test"""
+    setup_data_load_imports()
 
 
 @pytest.fixture
@@ -149,11 +179,3 @@ def sample_row():
     })
 
 
-# Clear any potentially interfering modules
-modules_to_clear = [
-    'main', 'db', 'db.config', 'db.models', 'db.enum_types', 'db.insert'
-]
-
-for module in modules_to_clear:
-    if module in sys.modules:
-        del sys.modules[module]

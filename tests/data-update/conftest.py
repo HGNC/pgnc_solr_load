@@ -9,8 +9,38 @@ from unittest.mock import Mock
 import psycopg2
 import pytest
 
-# Add the data-update directory to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../bin/data-update'))
+# Setup paths
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+data_update_path = os.path.join(project_root, 'bin/data-update')
+data_load_path = os.path.join(project_root, 'bin/data-load')
+
+# Function to setup data-update imports
+def setup_data_update_imports():
+    # Clear any potentially interfering modules to avoid conflicts
+    modules_to_clear = [
+        'main', 'models', 'models.gene'
+    ]
+    
+    for module in modules_to_clear:
+        if module in sys.modules:
+            del sys.modules[module]
+    
+    # Remove data-load path if it exists to avoid conflicts
+    if data_load_path in sys.path:
+        sys.path.remove(data_load_path)
+    
+    # Add the data-update directory to the Python path
+    if data_update_path not in sys.path:
+        sys.path.insert(0, data_update_path)
+
+# Call setup function
+setup_data_update_imports()
+
+
+@pytest.fixture(autouse=True)
+def ensure_data_update_imports():
+    """Ensure data-update imports are properly configured before each test"""
+    setup_data_update_imports()
 
 
 @pytest.fixture
@@ -212,5 +242,5 @@ modules_to_clear = [
 ]
 
 for module in modules_to_clear:
-    if module in locals():
-        del locals()[module]
+    if module in sys.modules:
+        del sys.modules[module]

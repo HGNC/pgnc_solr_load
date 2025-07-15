@@ -198,3 +198,87 @@ This comprehensive test suite establishes a strong foundation for:
 - **CI/CD Readiness**: Automated testing pipeline capability
 
 The test suites follow industry best practices and provide extensive coverage of both the enum type definitions and database insert operations that are critical to the PGNC external stack project's data loading functionality.
+
+## 📊 Current Test Coverage Report
+
+**Total Coverage: 93% (4,040 of 4,340 lines covered)**
+
+*Generated: 2025-01-15*
+
+| Name                                               |    Stmts |     Miss |   Cover |   Missing |
+|--------------------------------------------------- | -------: | -------: | ------: | --------: |
+| bin/data-load/db/\_\_init\_\_.py                   |        4 |        0 |    100% |           |
+| bin/data-load/db/config.py                         |        8 |        0 |    100% |           |
+| bin/data-load/db/enum\_types/\_\_init\_\_.py       |        3 |        0 |    100% |           |
+| bin/data-load/db/enum\_types/basic\_status.py      |        5 |        0 |    100% |           |
+| bin/data-load/db/enum\_types/gene\_status.py       |        8 |        0 |    100% |           |
+| bin/data-load/db/enum\_types/nomenclature.py       |        5 |        0 |    100% |           |
+| bin/data-load/db/insert/\_\_init\_\_.py            |        5 |        0 |    100% |           |
+| bin/data-load/db/insert/gene\_location.py          |       20 |        0 |    100% |           |
+| bin/data-load/db/insert/gene\_locus\_type.py       |       20 |        0 |    100% |           |
+| bin/data-load/db/insert/gene\_name.py              |       27 |        0 |    100% |           |
+| bin/data-load/db/insert/gene\_symbol.py            |       27 |        0 |    100% |           |
+| bin/data-load/db/insert/gene\_xref.py              |       31 |        0 |    100% |           |
+| bin/data-load/db/models/\_\_init\_\_.py            |       19 |        0 |    100% |           |
+| bin/data-load/db/models/assembly.py                |       19 |        2 |     89% |       7-8 |
+| bin/data-load/db/models/assembly\_has\_location.py |       14 |        2 |     86% |       7-8 |
+| bin/data-load/db/models/base.py                    |        3 |        0 |    100% |           |
+| bin/data-load/db/models/external\_resource.py      |       12 |        1 |     92% |         7 |
+| bin/data-load/db/models/gene.py                    |       35 |        7 |     80% |      9-15 |
+| bin/data-load/db/models/gene\_has\_location.py     |       24 |        3 |     88% |      9-11 |
+| bin/data-load/db/models/gene\_has\_locus\_type.py  |       24 |        3 |     88% |      9-11 |
+| bin/data-load/db/models/gene\_has\_name.py         |       27 |        3 |     89% |     10-12 |
+| bin/data-load/db/models/gene\_has\_symbol.py       |       27 |        3 |     89% |     10-12 |
+| bin/data-load/db/models/gene\_has\_xref.py         |       26 |        3 |     88% |      9-11 |
+| bin/data-load/db/models/location.py                |       18 |        2 |     89% |       7-8 |
+| bin/data-load/db/models/locus\_group.py            |       12 |        1 |     92% |         7 |
+| bin/data-load/db/models/locus\_type.py             |       15 |        2 |     87% |       7-8 |
+| bin/data-load/db/models/name.py                    |       12 |        1 |     92% |         7 |
+| bin/data-load/db/models/role.py                    |       12 |        1 |     92% |         7 |
+| bin/data-load/db/models/species.py                 |       15 |        2 |     87% |       7-8 |
+| bin/data-load/db/models/symbol.py                  |       12 |        1 |     92% |         7 |
+| bin/data-load/db/models/user.py                    |       36 |        6 |     83% |      8-13 |
+| bin/data-load/db/models/user\_has\_role.py         |       14 |        3 |     79% |   7-8, 32 |
+| bin/data-load/db/models/xref.py                    |       15 |        2 |     87% |       7-8 |
+| bin/data-load/main.py                              |      288 |      107 |     63% |250-266, 278-343, 363-364, 369-370, 386-420, 432-497, 521, 534-538, 551, 572, 585-589, 603, 652-674, 773 |
+| bin/data-update/main.py                            |      183 |       38 |     79% |80-82, 145, 178, 231, 233, 281, 316, 334, 342-354, 386, 406-427, 431 |
+| bin/data-update/models/\_\_init\_\_.py             |        0 |        0 |    100% |           |
+| bin/data-update/models/gene.py                     |      116 |        0 |    100% |           |
+| run\_tests.py                                      |       24 |       24 |      0% |      5-47 |
+| tests/\_\_init\_\_.py                              |        0 |        0 |    100% |           |
+| tests/conftest.py                                  |       34 |        0 |    100% |           |
+| tests/data-load/\_\_init\_\_.py                    |        0 |        0 |    100% |           |
+| tests/data-load/conftest.py                        |       92 |        6 |     93% |42, 154-158 |
+| tests/data-load/test\_integration.py               |      188 |        0 |    100% |           |
+| tests/data-load/test\_main.py                      |      335 |        2 |     99% |  136, 235 |
+| tests/data-update/\_\_init\_\_.py                  |        3 |        3 |      0% |       4-8 |
+| tests/data-update/conftest.py                      |      115 |       60 |     48% |49-52, 58-59, 65, 71, 82, 88, 99, 109-127, 133, 156, 181-184, 190-194, 200-202, 208, 221-236, 246 |
+| tests/data-update/test\_gene\_model.py             |      185 |        0 |    100% |           |
+| tests/data-update/test\_solr\_main.py              |       83 |        0 |    100% |           |
+| tests/db/\_\_init\_\_.py                           |        0 |        0 |    100% |           |
+| tests/db/conftest.py                               |       13 |        1 |     92% |        16 |
+| tests/db/test\_config.py                           |      113 |        3 |     97% | 67-68, 96 |
+| tests/db/test\_init.py                             |       49 |        0 |    100% |           |
+| tests/db/test\_integration.py                      |       94 |        2 |     98% |   157-158 |
+| tests/enum\_types/\_\_init\_\_.py                  |        0 |        0 |    100% |           |
+| tests/enum\_types/test\_basic\_status.py           |       95 |        0 |    100% |           |
+| tests/enum\_types/test\_gene\_status.py            |       94 |        0 |    100% |           |
+| tests/enum\_types/test\_integration.py             |       94 |        0 |    100% |           |
+| tests/enum\_types/test\_nomenclature.py            |       89 |        0 |    100% |           |
+| tests/insert/\_\_init\_\_.py                       |        0 |        0 |    100% |           |
+| tests/insert/test\_gene\_location.py               |      138 |        0 |    100% |           |
+| tests/insert/test\_gene\_locus\_type.py            |      138 |        0 |    100% |           |
+| tests/insert/test\_gene\_name.py                   |      137 |        0 |    100% |           |
+| tests/insert/test\_gene\_symbol.py                 |      134 |        0 |    100% |           |
+| tests/insert/test\_gene\_xref.py                   |      165 |        0 |    100% |           |
+| tests/insert/test\_integration.py                  |      166 |        2 |     99% |   308-309 |
+| tests/models/\_\_init\_\_.py                       |        0 |        0 |    100% |           |
+| tests/models/conftest.py                           |       13 |        2 |     85% |    11, 26 |
+| tests/models/test\_base.py                         |       21 |        0 |    100% |           |
+| tests/models/test\_gene.py                         |      117 |        0 |    100% |           |
+| tests/models/test\_gene\_has\_symbol.py            |      116 |        0 |    100% |           |
+| tests/models/test\_integration.py                  |       85 |        2 |     98% |   135-138 |
+| tests/models/test\_location.py                     |       96 |        0 |    100% |           |
+| tests/models/test\_symbol.py                       |       61 |        0 |    100% |           |
+| tests/models/test\_user.py                         |      112 |        0 |    100% |           |
+|                                          **TOTAL** | **4340** |  **300** | **93%** |           |
