@@ -128,15 +128,32 @@ class GeneDataLoader:
             bool: True if processing succeeded, False if the row was skipped.
         """
         primary_id = row.get("primary_id", None)
-
         if primary_id is None:
-            print(f"Skipping row {index} due to missing data.")
+            print(f"WARNING: Row {index} is missing primary_id:")
+            print(row)
             return False
-
+        primary_id_source = row.get("primary_id_source", None)
+        if primary_id_source is None:
+            print(f"WARNING: Row {index} is missing primary_id_source:")
+            print(row)
+            return False
         session_factory = sa.orm.sessionmaker(bind=engine)
         with session_factory() as session:
+            gene_i: Gene
+            creator_i: User
             try:
-                gene_i, creator_i = self._get_gene_and_creator(session, primary_id)
+                gene_i, creator_i = self._get_gene_and_creator(
+                    session, primary_id, primary_id_source
+                )
+            except sa.orm.exc.NoResultFound:
+                print(
+                    f"Gene {primary_id} not found in the database. "
+                    "Creating new gene."
+                )
+                gene_i, creator_i = self._create_new_gene(
+                    session, primary_id, primary_id_source
+                )
+            try:    
                 self._process_symbols(session, row, gene_i, creator_i)
                 self._process_names(session, row, gene_i, creator_i)
                 self._process_location(session, row, gene_i, creator_i)
@@ -157,13 +174,16 @@ class GeneDataLoader:
                 print(f"Error processing row {index}: {e}")
                 return False
 
-    def _get_gene_and_creator(self, session, primary_id) -> tuple[Gene, User]:
+    def _get_gene_and_creator(
+        self, session, primary_id, primary_id_source
+    ) -> tuple[Gene, User]:
         """
         Get gene and creator objects from the database.
 
         Args:
             session (sqlalchemy.orm.Session): SQLAlchemy database session.
             primary_id (str): The primary ID of the gene.
+            primary_id_source (str): The source of the primary ID.
 
         Returns:
             tuple: (gene, creator) SQLAlchemy model objects.
@@ -175,11 +195,50 @@ class GeneDataLoader:
             session.query(Gene)
             .where(
                 Gene.primary_id == primary_id,
-                Gene.primary_id_source == "phytozome",
+                Gene.primary_id_source == primary_id_source
             )
             .one()
         )
-        creator_i = session.query(User).where(User.email == "sart2@cam.ac.uk").one()
+        creator_i = session.query(User).where(
+            User.email == "sart2@cam.ac.uk"
+        ).one()
+        return gene_i, creator_i
+
+    def _create_new_gene(
+        self, session, primary_id, primary_id_source, taxon_id=3694, creation_date=None
+    ) -> tuple[Gene, User]:
+        """
+        Create a new gene record in the database.
+
+        Args:
+            session (sqlalchemy.orm.Session): SQLAlchemy database session.
+            primary_id (str): The primary ID of the gene.
+            primary_id_source (str): The source of the primary ID.
+
+        Returns:
+            tuple: (gene, creator) SQLAlchemy model objects.
+
+        Raises:
+            sqlalchemy.orm.exc.NoResultFound: If the creator is not found.
+        """
+        if creation_date is None:
+            creation_date = pandas.Timestamp.now()
+        creator_i = session.query(User).where(
+            User.email == "sart2@cam.ac.uk"
+        ).one()
+        
+        gene_i = Gene(
+            taxon_id=taxon_id, # Taxon ID for Populus trichocarpa
+            primary_id=primary_id,
+            primary_id_source=primary_id_source,
+            status=GeneStatusEnum.internal,
+            creator_id=creator_i.id,
+            creation_date=creation_date
+        )
+        session.add(gene_i)
+        session.flush()
+        session.refresh(gene_i)
+        
         return gene_i, creator_i
 
     def _process_symbols(self, session, row, gene_i, creator_i):
@@ -235,8 +294,8 @@ class GeneDataLoader:
                 symbol,
                 gene_i.id,
                 creator_i.id,
-                NomenclatureEnum.approved,
-                BasicStatusEnum.public,
+                NomenclatureEnum.approved.value,
+                BasicStatusEnum.public.value,
             )
         else:
             # is it an approved symbol?
@@ -289,8 +348,8 @@ class GeneDataLoader:
                         symbol=alias_symbol,
                         gene_id=gene_i.id,
                         creator_id=creator_i.id,
-                        type=NomenclatureEnum.alias,
-                        status=BasicStatusEnum.public,
+                        type=NomenclatureEnum.alias.value,
+                        status=BasicStatusEnum.public.value,
                     )
                 else:
                     if existing_symbol.symbol_has_genes is not None:
@@ -391,8 +450,8 @@ class GeneDataLoader:
                 name,
                 gene_i.id,
                 creator_i.id,
-                NomenclatureEnum.approved,
-                BasicStatusEnum.public,
+                NomenclatureEnum.approved.value,
+                BasicStatusEnum.public.value,
             )
         else:
             if existing_name.name_has_genes is not None:
@@ -443,8 +502,8 @@ class GeneDataLoader:
                         name=alias_name,
                         gene_id=gene_i.id,
                         creator_id=creator_i.id,
-                        type=NomenclatureEnum.alias,
-                        status=BasicStatusEnum.public,
+                        type=NomenclatureEnum.alias.value,
+                        status=BasicStatusEnum.public.value,
                     )
                 else:
                     if existing_name.name_has_genes is not None:
@@ -683,7 +742,7 @@ class GeneDataLoader:
                         gene_id=gene_i.id,
                         creator_id=creator_i.id,
                         source="curator",
-                        status=BasicStatusEnum.public,
+                        status=BasicStatusEnum.public.value,
                     )
 
 
@@ -708,11 +767,12 @@ def dump_db(cmd: tuple[str, ...], file_name: str):
         # with open("backup.sql", "w") as f:
         popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
         print("dump_db running")
-        for stdout_line in iter(popen.stdout.readline, ""):
-            f.write(stdout_line.encode("utf-8"))
-            # f.write(stdout_line)
+        if popen.stdout is not None:
+            for stdout_line in iter(popen.stdout.readline, ""):
+                f.write(stdout_line.encode("utf-8"))
+                # f.write(stdout_line)
 
-        popen.stdout.close()
+            popen.stdout.close()
         popen.wait()
 
 

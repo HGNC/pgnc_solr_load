@@ -54,9 +54,9 @@ def ensure_data_load_imports():
 @pytest.fixture
 def sample_csv_content():
     """Sample CSV content for testing"""
-    return """primary_id,gene_symbol_string,gene_name_string,gene_alt_symbol,gene_alt_name,chromosome,map_location,locus_type,external_id_ensembl,external_id_refseq,external_id_ucsc
-Phytozome.1.1,SYMBOL1,Gene Name 1,ALT_SYM1,Alt Name 1,1,1q21.1,protein-coding,ENSEMBL1,REFSEQ1,UCSC1
-Phytozome.1.2,SYMBOL2,Gene Name 2,ALT_SYM2,Alt Name 2,2,2p13.3,pseudogene,ENSEMBL2,REFSEQ2,UCSC2"""
+    return """primary_id,primary_id_source,gene_symbol_string,gene_name_string,gene_alt_symbol,gene_alt_name,chromosome,map_location,locus_type,external_id_ensembl,external_id_refseq,external_id_ucsc
+Phytozome.1.1,phytozome,SYMBOL1,Gene Name 1,ALT_SYM1,Alt Name 1,1,1q21.1,protein-coding,ENSEMBL1,REFSEQ1,UCSC1
+Phytozome.1.2,phytozome,SYMBOL2,Gene Name 2,ALT_SYM2,Alt Name 2,2,2p13.3,pseudogene,ENSEMBL2,REFSEQ2,UCSC2"""
 
 
 @pytest.fixture
@@ -94,6 +94,7 @@ def sample_dataframe():
     """Sample pandas DataFrame for testing"""
     return pd.DataFrame({
         'primary_id': ['Phytozome.1.1', 'Phytozome.1.2'],
+        'primary_id_source': ['phytozome', 'phytozome'],
         'gene_symbol_string': ['SYMBOL1', 'SYMBOL2'],
         'gene_name_string': ['Gene Name 1', 'Gene Name 2'],
         'gene_alt_symbol': ['ALT_SYM1', 'ALT_SYM2'],
@@ -163,6 +164,7 @@ def sample_row():
     """Sample pandas Series representing a CSV row"""
     return pd.Series({
         'primary_id': 'Phytozome.1.1',
+        'primary_id_source': 'phytozome',
         'gene_symbol_string': 'SYMBOL1',
         'gene_name_string': 'Gene Name 1',
         'gene_alt_symbol': 'ALT_SYM1',

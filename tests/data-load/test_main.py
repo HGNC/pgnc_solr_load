@@ -140,7 +140,7 @@ class TestGeneDataLoader:
         from main import GeneDataLoader  # type: ignore
         
         loader = GeneDataLoader.__new__(GeneDataLoader)
-        row = pd.Series({'gene_symbol_string': 'TEST'})
+        row = pd.Series({'gene_symbol_string': 'TEST', 'primary_id_source': 'phytozome'})
         
         with patch('builtins.print') as mock_print:
             result = loader._process_row(mock_engine, 0, row)
@@ -199,18 +199,61 @@ class TestGeneDataLoader:
         
         loader = GeneDataLoader.__new__(GeneDataLoader)
         
+        # Mock gene and user objects
+        mock_gene = Mock()
+        mock_gene.primary_id = "Phytozome.1.1"
+        mock_user = Mock()
+        
         # Mock _get_gene_and_creator to raise an exception
-        with patch.object(loader, '_get_gene_and_creator', side_effect=Exception("Test error")):
-            with patch('builtins.print') as mock_print:
-                result = loader._process_row(mock_engine, 0, sample_row)
-                
-                assert result is False
-                mock_session.rollback.assert_called_once()
-                # Check that print was called twice - once for the row, once for the error
-                assert mock_print.call_count == 2
-                # Check the error message specifically
-                error_call = mock_print.call_args_list[1]
-                assert "Error processing row 0: Test error" in str(error_call)
+        with patch.object(loader, '_get_gene_and_creator', return_value=(mock_gene, mock_user)):
+            with patch.object(loader, '_process_symbols', side_effect=Exception("Test error")):
+                with patch('builtins.print') as mock_print:
+                    result = loader._process_row(mock_engine, 0, sample_row)
+                    
+                    assert result is False
+                    mock_session.rollback.assert_called_once()
+                    # Check that print was called twice - once for the row, once for the error
+                    assert mock_print.call_count == 2
+                    # Check the error message specifically
+                    error_call = mock_print.call_args_list[1]
+                    assert "Error processing row 0: Test error" in str(error_call)
+    
+    @patch('main.sa.orm.sessionmaker')
+    def test_process_row_gene_not_found_creates_new(self, mock_sessionmaker, mock_engine, sample_row):
+        """Test row processing when gene is not found, creates new gene"""
+        import sqlalchemy as sa
+        from main import GeneDataLoader, GeneStatusEnum  # type: ignore
+        
+        # Mock session and its context manager
+        mock_session = Mock()
+        mock_session.__enter__ = Mock(return_value=mock_session)
+        mock_session.__exit__ = Mock(return_value=None)
+        mock_sessionmaker.return_value = Mock(return_value=mock_session)
+        
+        # Mock gene and user objects
+        mock_gene = Mock()
+        mock_gene.primary_id = "Phytozome.1.1"
+        mock_gene.status = GeneStatusEnum.internal
+        mock_user = Mock()
+        
+        loader = GeneDataLoader.__new__(GeneDataLoader)
+        
+        # Mock _get_gene_and_creator to raise NoResultFound, then _create_new_gene to return gene and user
+        with patch.object(loader, '_get_gene_and_creator', side_effect=sa.orm.exc.NoResultFound("Gene not found")):
+            with patch.object(loader, '_create_new_gene', return_value=(mock_gene, mock_user)):
+                with patch.object(loader, '_process_symbols'):
+                    with patch.object(loader, '_process_names'):
+                        with patch.object(loader, '_process_location'):
+                            with patch.object(loader, '_process_locus_type'):
+                                with patch.object(loader, '_process_crossrefs'):
+                                    with patch('builtins.print') as mock_print:
+                                        result = loader._process_row(mock_engine, 0, sample_row)
+                                        
+                                        assert result is True
+                                        mock_session.add.assert_called_with(mock_gene)
+                                        mock_session.commit.assert_called_once()
+                                        mock_print.assert_any_call("Gene Phytozome.1.1 not found in the database. Skipping row 0.")
+                                        mock_print.assert_any_call("Processed row 0: Phytozome.1.1 successfully.")
     
     def test_get_gene_and_creator_success(self, mock_session):
         """Test successful gene and creator retrieval"""
@@ -243,17 +286,52 @@ class TestGeneDataLoader:
                 mock_gene_class.__name__ = 'Gene'
                 mock_user_class.__name__ = 'User'
                 
-                result_gene, result_user = loader._get_gene_and_creator(mock_session, "Phytozome.1.1")
+                result_gene, result_user = loader._get_gene_and_creator(mock_session, "Phytozome.1.1", "phytozome")
                 
                 assert result_gene == mock_gene
                 assert result_user == mock_user
+    
+    def test_create_new_gene_success(self, mock_session):
+        """Test successful gene creation"""
+        from main import GeneDataLoader, GeneStatusEnum  # type: ignore
+        
+        # Mock user query result
+        mock_user = Mock()
+        mock_user_query = Mock()
+        mock_user_query.where.return_value.one.return_value = mock_user
+        mock_session.query.return_value = mock_user_query
+        
+        loader = GeneDataLoader.__new__(GeneDataLoader)
+        
+        with patch('main.Gene') as mock_gene_class:
+            mock_gene = Mock()
+            mock_gene.primary_id = "Phytozome.1.1"
+            mock_gene.primary_id_source = "phytozome"
+            mock_gene.status = GeneStatusEnum.internal
+            mock_gene_class.return_value = mock_gene
+            
+            result_gene, result_user = loader._create_new_gene(mock_session, "Phytozome.1.1", "phytozome")
+            
+            # Verify gene creation
+            mock_gene_class.assert_called_once_with(
+                primary_id="Phytozome.1.1",
+                primary_id_source="phytozome",
+                status=GeneStatusEnum.internal,
+                created_by=mock_user.id
+            )
+            mock_session.add.assert_called_once_with(mock_gene)
+            mock_session.flush.assert_called_once()
+            mock_session.refresh.assert_called_once_with(mock_gene)
+            
+            assert result_gene == mock_gene
+            assert result_user == mock_user
     
     def test_process_symbols_missing_symbol(self, mock_session, mock_gene, mock_user):
         """Test _process_symbols with missing gene_symbol_string"""
         from main import GeneDataLoader  # type: ignore
         
         loader = GeneDataLoader.__new__(GeneDataLoader)
-        row = pd.Series({'primary_id': 'Phytozome.1.1'})  # Missing gene_symbol_string
+        row = pd.Series({'primary_id': 'Phytozome.1.1', 'primary_id_source': 'phytozome'})  # Missing gene_symbol_string
         
         with pytest.raises(ValueError, match="gene_symbol_string is required."):
             loader._process_symbols(mock_session, row, mock_gene, mock_user)
@@ -340,7 +418,7 @@ class TestGeneDataLoaderNameProcessing:
         from main import GeneDataLoader  # type: ignore
         
         loader = GeneDataLoader.__new__(GeneDataLoader)
-        row = pd.Series({'primary_id': 'Phytozome.1.1'})  # Missing gene_name_string
+        row = pd.Series({'primary_id': 'Phytozome.1.1', 'primary_id_source': 'phytozome'})  # Missing gene_name_string
         
         with pytest.raises(ValueError, match="gene_name_string is required."):
             loader._process_names(mock_session, row, mock_gene, mock_user)
@@ -432,9 +510,9 @@ class TestGeneDataLoaderCrossrefsProcessing:
             
             # Verify _process_xref_field called for each external ID type
             expected_calls = [
-                ('external_id_ensembl', 'ensembl'),
-                ('external_id_refseq', 'refseq'),
-                ('external_id_ucsc', 'ucsc')
+                ('ncbi_gene_id', 1),
+                ('uniprot_id', 3),
+                ('pubmed_id', 4)
             ]
             
             assert mock_process_xref.call_count == len(expected_calls)
