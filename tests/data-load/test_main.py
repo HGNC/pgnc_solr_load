@@ -146,7 +146,20 @@ class TestGeneDataLoader:
             result = loader._process_row(mock_engine, 0, row)
             
             assert result is False
-            mock_print.assert_called_with("Skipping row 0 due to missing data.")
+            mock_print.assert_any_call("WARNING: Row 0 is missing primary_id:")
+    
+    def test_process_row_missing_primary_id_source(self, mock_engine):
+        """Test _process_row with missing primary_id_source"""
+        from main import GeneDataLoader  # type: ignore
+        
+        loader = GeneDataLoader.__new__(GeneDataLoader)
+        row = pd.Series({'primary_id': 'TEST.1.1', 'gene_symbol_string': 'TEST'})
+        
+        with patch('builtins.print') as mock_print:
+            result = loader._process_row(mock_engine, 0, row)
+            
+            assert result is False
+            mock_print.assert_any_call("WARNING: Row 0 is missing primary_id_source:")
     
     @patch('main.sa.orm.sessionmaker')
     def test_process_row_success(self, mock_sessionmaker, mock_engine, sample_row):
@@ -252,7 +265,7 @@ class TestGeneDataLoader:
                                         assert result is True
                                         mock_session.add.assert_called_with(mock_gene)
                                         mock_session.commit.assert_called_once()
-                                        mock_print.assert_any_call("Gene Phytozome.1.1 not found in the database. Skipping row 0.")
+                                        mock_print.assert_any_call("Gene Phytozome.1.1 not found in the database. Creating new gene.")
                                         mock_print.assert_any_call("Processed row 0: Phytozome.1.1 successfully.")
     
     def test_get_gene_and_creator_success(self, mock_session):
@@ -297,34 +310,127 @@ class TestGeneDataLoader:
         
         # Mock user query result
         mock_user = Mock()
+        mock_user.id = 1
         mock_user_query = Mock()
         mock_user_query.where.return_value.one.return_value = mock_user
-        mock_session.query.return_value = mock_user_query
+        
+        # Mock external resource query result
+        mock_ext_res = Mock()
+        mock_ext_res.id = 1
+        mock_ext_res_query = Mock()
+        mock_ext_res_query.where.return_value.one.return_value = mock_ext_res
+        
+        # Mock xref query to return None (no existing xref)
+        mock_xref_query = Mock()
+        mock_xref_query.where.return_value.one_or_none.return_value = None
+        
+        # Configure session.query to return different mocks based on model
+        def query_side_effect(model):
+            if hasattr(model, '__name__'):
+                if model.__name__ == 'User':
+                    return mock_user_query
+                elif model.__name__ == 'ExternalResource':
+                    return mock_ext_res_query
+                elif model.__name__ == 'Xref':
+                    return mock_xref_query
+            return Mock()
+        
+        mock_session.query.side_effect = query_side_effect
         
         loader = GeneDataLoader.__new__(GeneDataLoader)
         
         with patch('main.Gene') as mock_gene_class:
-            mock_gene = Mock()
-            mock_gene.primary_id = "Phytozome.1.1"
-            mock_gene.primary_id_source = "phytozome"
-            mock_gene.status = GeneStatusEnum.internal
-            mock_gene_class.return_value = mock_gene
-            
-            result_gene, result_user = loader._create_new_gene(mock_session, "Phytozome.1.1", "phytozome")
-            
-            # Verify gene creation
-            mock_gene_class.assert_called_once_with(
-                primary_id="Phytozome.1.1",
-                primary_id_source="phytozome",
-                status=GeneStatusEnum.internal,
-                created_by=mock_user.id
-            )
-            mock_session.add.assert_called_once_with(mock_gene)
-            mock_session.flush.assert_called_once()
-            mock_session.refresh.assert_called_once_with(mock_gene)
-            
-            assert result_gene == mock_gene
-            assert result_user == mock_user
+            with patch('main.Xref') as mock_xref_class:
+                with patch('main.GeneHasXref') as mock_gene_has_xref_class:
+                    with patch('main.User') as mock_user_class:
+                        with patch('main.ExternalResource') as mock_ext_res_class:
+                            with patch('pandas.Timestamp') as mock_timestamp:
+                                mock_gene = Mock()
+                                mock_gene.id = 1
+                                mock_gene.primary_id = "Phytozome.1.1"
+                                mock_gene.primary_id_source = "phytozome"
+                                mock_gene.status = GeneStatusEnum.internal
+                                mock_gene_class.return_value = mock_gene
+                                
+                                mock_xref = Mock()
+                                mock_xref.id = 1
+                                mock_xref_class.return_value = mock_xref
+                                
+                                mock_gene_has_xref = Mock()
+                                mock_gene_has_xref_class.return_value = mock_gene_has_xref
+                                
+                                mock_timestamp.now.return_value = "2023-01-01"
+                                
+                                # Set up class names for query side effect
+                                mock_user_class.__name__ = 'User'
+                                mock_ext_res_class.__name__ = 'ExternalResource'
+                                mock_xref_class.__name__ = 'Xref'
+                                
+                                result_gene, result_user = loader._create_new_gene(
+                                    mock_session, "Phytozome.1.1", "phytozome"
+                                )
+                                
+                                # Verify gene creation
+                                mock_gene_class.assert_called_once_with(
+                                    taxon_id=3694,
+                                    primary_id="Phytozome.1.1",
+                                    primary_id_source="phytozome",
+                                    status=GeneStatusEnum.internal,
+                                    creator_id=mock_user.id,
+                                    creation_date="2023-01-01"
+                                )
+                                
+                                # Verify xref creation
+                                mock_xref_class.assert_called_once_with(
+                                    display_id="Phytozome.1.1",
+                                    ext_res_id=mock_ext_res.id
+                                )
+                                
+                                # Verify gene_has_xref creation
+                                mock_gene_has_xref_class.assert_called_once()
+                                
+                                # Verify session operations
+                                assert mock_session.add.call_count == 3  # gene, xref, gene_has_xref
+                                assert mock_session.flush.call_count == 3
+                                assert mock_session.refresh.call_count == 3
+                                
+                                assert result_gene == mock_gene
+                                assert result_user == mock_user
+    
+    def test_create_new_gene_xref_already_exists(self, mock_session):
+        """Test gene creation when xref already exists"""
+        from main import GeneDataLoader  # type: ignore
+        
+        # Mock user query result
+        mock_user = Mock()
+        mock_user_query = Mock()
+        mock_user_query.where.return_value.one.return_value = mock_user
+        
+        # Mock xref query to return existing xref
+        mock_existing_xref = Mock()
+        mock_xref_query = Mock()
+        mock_xref_query.where.return_value.one_or_none.return_value = mock_existing_xref
+        
+        # Configure session.query
+        def query_side_effect(model):
+            if hasattr(model, '__name__'):
+                if model.__name__ == 'User':
+                    return mock_user_query
+                elif model.__name__ == 'Xref':
+                    return mock_xref_query
+            return Mock()
+        
+        mock_session.query.side_effect = query_side_effect
+        
+        loader = GeneDataLoader.__new__(GeneDataLoader)
+        
+        with patch('main.User') as mock_user_class:
+            with patch('main.Xref') as mock_xref_class:
+                mock_user_class.__name__ = 'User'
+                mock_xref_class.__name__ = 'Xref'
+                
+                with pytest.raises(ValueError, match="Xref with display_id 'Phytozome.1.1' already exists"):
+                    loader._create_new_gene(mock_session, "Phytozome.1.1", "phytozome")
     
     def test_process_symbols_missing_symbol(self, mock_session, mock_gene, mock_user):
         """Test _process_symbols with missing gene_symbol_string"""

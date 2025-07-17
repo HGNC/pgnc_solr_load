@@ -23,6 +23,7 @@ from db.enum_types.nomenclature import NomenclatureEnum
 from db.insert.gene_name import GeneName
 from db.insert.gene_symbol import GeneSymbol
 from db.insert.gene_xref import GeneXref
+from db.models.external_resource import ExternalResource
 from db.models.gene import Gene
 from db.models.gene_has_location import GeneHasLocation
 from db.models.gene_has_locus_type import GeneHasLocusType
@@ -205,7 +206,8 @@ class GeneDataLoader:
         return gene_i, creator_i
 
     def _create_new_gene(
-        self, session, primary_id, primary_id_source, taxon_id=3694, creation_date=None
+        self, session, primary_id, primary_id_source,
+        taxon_id=3694, creation_date=None
     ) -> tuple[Gene, User]:
         """
         Create a new gene record in the database.
@@ -221,12 +223,28 @@ class GeneDataLoader:
         Raises:
             sqlalchemy.orm.exc.NoResultFound: If the creator is not found.
         """
+        # Set default creation date if not provided
         if creation_date is None:
             creation_date = pandas.Timestamp.now()
         creator_i = session.query(User).where(
             User.email == "sart2@cam.ac.uk"
         ).one()
         
+        # Check if the xref already exists
+        xref: Xref | None = session.query(Xref).where(
+            Xref.display_id == primary_id,
+            Xref.ext_resource_id == 1
+        ).one_or_none()
+        if xref is not None:
+            raise ValueError(
+                f"Xref with display_id '{primary_id}' already exists in the database."
+            )
+        # Check if the external resource exists
+        ext_res: ExternalResource = session.query(ExternalResource).where(
+            ExternalResource.name == primary_id_source
+        ).one()
+
+        # Create a new gene record
         gene_i = Gene(
             taxon_id=taxon_id, # Taxon ID for Populus trichocarpa
             primary_id=primary_id,
@@ -239,6 +257,30 @@ class GeneDataLoader:
         session.flush()
         session.refresh(gene_i)
         
+        gene_id = gene_i.id
+        ext_res_id = ext_res.id
+
+        # Create a new xref record
+        xref_i = Xref(
+            display_id=primary_id,
+            ext_res_id=ext_res_id
+        )
+        session.add(xref_i)
+        session.flush()
+        session.refresh(xref_i)
+
+        # Create a link between the gene and the xref
+        gene_has_xref_i = GeneHasXref(
+            gene_id=gene_id,
+            xref_id=xref_i.id,
+            creator_id=creator_i.id,
+            source="curator",
+            status=BasicStatusEnum.public.value
+        )
+        session.add(gene_has_xref_i)
+        session.flush()
+        session.refresh(gene_has_xref_i) 
+
         return gene_i, creator_i
 
     def _process_symbols(self, session, row, gene_i, creator_i):
@@ -263,13 +305,15 @@ class GeneDataLoader:
             self._process_approved_symbol(session, symbol, gene_i, creator_i)
         except ValueError:
             print(
-                f"Gene {gene_i.primary_id} already has approved symbol {symbol}. Skipping"
+                f"Gene {gene_i.primary_id} already has approved "
+                f"symbol {symbol}. Skipping"
             )
         try:
             self._process_alias_symbols(session, row, gene_i, creator_i)
         except ValueError:
             print(
-                f"Gene {gene_i.primary_id} already has alias symbol {symbol}. Skipping"
+                f"Gene {gene_i.primary_id} already has "
+                f"alias symbol {symbol}. Skipping"
             )
 
     def _process_approved_symbol(self, session, symbol, gene_i, creator_i):

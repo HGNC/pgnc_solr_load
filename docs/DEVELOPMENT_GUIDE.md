@@ -207,10 +207,24 @@ class DatabaseError(PGNCError):
 #### 2. Error Handling Best Practices
 
 ```python
-def process_gene_row(session: Session, row: pd.Series) -> bool:
+def process_gene_row(session: Session, row: pd.Series, index: int) -> bool:
     """Process a single gene data row with comprehensive error handling."""
+    
+    # Early validation of required fields
+    primary_id = row.get("primary_id", None)
+    if primary_id is None:
+        logger.warning(f"Row {index} is missing primary_id:")
+        logger.warning(row.to_dict())
+        return False
+        
+    primary_id_source = row.get("primary_id_source", None)
+    if primary_id_source is None:
+        logger.warning(f"Row {index} is missing primary_id_source:")
+        logger.warning(row.to_dict())
+        return False
+    
     try:
-        # Validate input data
+        # Validate additional data
         if not _validate_gene_data(row):
             raise DataValidationError(f"Invalid gene data: {row.to_dict()}")
         
@@ -223,16 +237,17 @@ def process_gene_row(session: Session, row: pd.Series) -> bool:
         return True
         
     except DataValidationError as e:
-        logger.warning(f"Validation failed for row: {e}")
+        logger.warning(f"Validation failed for row {index}: {e}")
+        session.rollback()
         return False
         
     except DatabaseError as e:
-        logger.error(f"Database error processing row: {e}")
+        logger.error(f"Database error processing row {index}: {e}")
         session.rollback()
         return False
         
     except Exception as e:
-        logger.error(f"Unexpected error processing row: {e}")
+        logger.error(f"Unexpected error processing row {index}: {e}")
         session.rollback()
         raise  # Re-raise unexpected errors
 ```

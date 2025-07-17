@@ -209,9 +209,10 @@ The project maintains **95%+ test coverage** with comprehensive test suites:
 ### Input Validation
 
 - **CSV Structure**: Column presence and data type validation
-- **Gene Identifiers**: Primary ID and source validation
+- **Required Fields**: Primary ID and source validation with early warning for missing data
 - **Nomenclature Rules**: Symbol and name format checking
 - **Cross-references**: External database ID validation
+- **Row Processing**: Individual row validation with detailed warning messages for data quality issues
 
 ### Database Constraints
 

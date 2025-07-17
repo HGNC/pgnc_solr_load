@@ -56,6 +56,32 @@ class GeneDataLoader:
         Raises:
             ValueError: If required data fields are missing.
         """
+
+def _process_row(
+    self,
+    engine: Engine,
+    index: int,
+    row: pd.Series
+) -> bool:
+    """
+    Process a single row of gene data.
+    
+    Validates row data, retrieves or creates gene records, and processes
+    all associated data including symbols, names, locations, locus types,
+    and cross-references.
+    
+    Args:
+        engine: SQLAlchemy database engine.
+        index: Index of the current row being processed.
+        row: DataFrame row containing gene data.
+        
+    Returns:
+        bool: True if processing succeeded, False if row was skipped.
+        
+    Note:
+        Rows missing primary_id or primary_id_source will be skipped
+        with appropriate warning messages.
+    """
 ```
 
 #### Core Processing Methods
@@ -88,21 +114,31 @@ def _create_new_gene(
     self,
     session: Session,
     primary_id: str,
-    primary_id_source: str
+    primary_id_source: str,
+    taxon_id: int = 3694,
+    creation_date: Optional[pd.Timestamp] = None
 ) -> Tuple[Gene, User]:
     """
-    Create a new gene record in the database.
+    Create a new gene record in the database with associated xref.
+    
+    This method creates a complete gene record including:
+    - The gene entity with specified primary_id and primary_id_source
+    - An associated xref record linking to the external resource
+    - A gene_has_xref relationship record
     
     Args:
         session: SQLAlchemy database session.
         primary_id: The primary ID of the gene.
         primary_id_source: The source of the primary ID.
+        taxon_id: Taxonomic ID (default: 3694 for Populus trichocarpa).
+        creation_date: Creation timestamp (default: current timestamp).
         
     Returns:
         Tuple of (gene, creator) SQLAlchemy model objects.
         
     Raises:
-        sqlalchemy.orm.exc.NoResultFound: If creator not found.
+        sqlalchemy.orm.exc.NoResultFound: If creator or external resource not found.
+        ValueError: If xref with the same display_id already exists.
     """
 ```
 
