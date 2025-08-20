@@ -333,7 +333,11 @@ def __upload_to_solr(solr_json: str, dry_run: bool) -> None:
     if dry_run:
         print(solr_json)
     else:
-        solr = pysolr.Solr("http://solr:8983/solr/pgnc", always_commit=True)
+        solr = pysolr.Solr(
+            "http://solr:8983/solr/pgnc",
+            always_commit=True,
+            auth=(os.getenv('SOLR_USERNAME'), os.getenv('SOLR_PASSWORD'))
+        )
         retries_remaining = RETRIES
         for i in range(RETRIES):
             try:
@@ -366,7 +370,11 @@ def __clear_solr_index() -> None:
     Raises:
         SolrUpdateError: If clearing the index fails after all retries.
     """
-    solr = pysolr.Solr("http://solr:8983/solr/pgnc", always_commit=True)
+    solr = pysolr.Solr(
+        "http://solr:8983/solr/pgnc",
+        always_commit=True,
+        auth=(os.getenv('SOLR_USERNAME'), os.getenv('SOLR_PASSWORD'))
+    )
     retries_remaining = RETRIES
     for i in range(RETRIES):
         try:
