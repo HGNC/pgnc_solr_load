@@ -1,6 +1,6 @@
 # PGNC External Stack - Python Components
 
-[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![pytest](https://img.shields.io/badge/pytest-8.4+-green.svg)](https://pytest.org/)
 [![Coverage](https://img.shields.io/badge/coverage-95%2B-brightgreen.svg)](./htmlcov/index.html)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
@@ -33,7 +33,6 @@ python/
 └── htmlcov/             # Test coverage reports
 ```
 
-
 ## Components
 
 ### 1. Data Loading Module (`bin/data-load/`)
@@ -41,6 +40,7 @@ python/
 **Purpose**: Import gene nomenclature data from CSV files into the PostgreSQL database.
 
 **Key Features**:
+
 - CSV parsing and validation
 - Database schema management
 - Gene entity creation (symbols, names, locations, cross-references)
@@ -48,15 +48,17 @@ python/
 - Error handling and rollback capabilities
 
 **Usage**:
+
 ```bash
 cd bin/data-load
 python main.py --file /path/to/gene_data.csv
 ```
 
 **Database Entities Managed**:
+
 - Genes (core gene records)
 - Gene symbols (approved, alias, previous)
-- Gene names (approved, alias, previous) 
+- Gene names (approved, alias, previous)
 - Chromosomal locations
 - Locus types (protein-coding, pseudogene, etc.)
 - Cross-references (Ensembl, NCBI, UniProt, Phytozome)
@@ -66,6 +68,7 @@ python main.py --file /path/to/gene_data.csv
 **Purpose**: Synchronize Apache Solr search indices with the current database state.
 
 **Key Features**:
+
 - Real-time database-to-Solr synchronization
 - JSON document generation for Solr indexing
 - Index management (clear, update, bulk operations)
@@ -73,17 +76,20 @@ python main.py --file /path/to/gene_data.csv
 - Dry-run mode for testing
 
 **Usage**:
+
 ```bash
 cd bin/data-update
 python main.py [--dump] [--dry-run] [--clear]
 ```
 
 **Command Options**:
+
 - `--dump`: Export Solr JSON to file without updating index
 - `--dry-run`: Preview changes without applying them
 - `--clear`: Clear existing Solr index before updating
 
 **Environment Variables**:
+
 ```bash
 DB_USER=postgres_username
 DB_PASSWORD=postgres_password  
@@ -96,31 +102,35 @@ DB_NAME=pgnc_database
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.13 or higher (tested with 3.13.2)
 - pip (Python package installer)
-- Access to PostgreSQL database
-- Access to Apache Solr instance
+- Access to PostgreSQL 17.0 database
+- Access to Apache Solr 8.x instance
 
 ### Setup
 
 1. **Clone the repository** (if not already done):
+
 ```bash
 git clone --recursive https://github.com/HGNC/pgnc-external-stack.git
 cd pgnc-external-stack/python
 ```
 
 2. **Create virtual environment** (recommended):
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
 3. **Install dependencies**:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 4. **Configure environment** (for data-update module):
+
 ```bash
 # Copy and edit environment variables
 cp ../.env.example .env
@@ -130,6 +140,7 @@ cp ../.env.example .env
 ## Dependencies
 
 ### Core Dependencies
+
 - **psycopg2-binary** (2.9.10): PostgreSQL database adapter
 - **pysolr** (3.10.0): Apache Solr client library
 - **pandas** (2.2.3): Data manipulation and analysis
@@ -137,6 +148,7 @@ cp ../.env.example .env
 - **numpy** (2.2.3): Numerical computing support
 
 ### Development Dependencies
+
 - **pytest** (8.4.1): Testing framework
 - **pytest-cov** (6.2.1): Coverage reporting
 - **pytest-mock** (3.15.0): Mocking utilities
@@ -190,7 +202,7 @@ tests/
 
 The project maintains high code quality standards:
 
-- **Type Hints**: Comprehensive type annotations using Python 3.8+ syntax
+- **Type Hints**: Comprehensive type annotations using Python 3.13+ syntax
 - **Pylance Compliance**: Zero pylance errors across all modules
 - **Error Handling**: Robust exception handling with custom error types
 - **Documentation**: Comprehensive docstrings following Google style
@@ -261,24 +273,28 @@ The project maintains high code quality standards:
 ### Common Issues
 
 **Database Connection Errors**:
+
 ```bash
 # Verify database connectivity
 python -c "import psycopg2; print('Database module loaded')"
 ```
 
 **Solr Connection Issues**:
+
 ```bash
 # Test Solr connectivity
 curl http://localhost:8983/solr/admin/ping
 ```
 
 **Import Path Issues**:
+
 ```bash
 # Ensure proper PYTHONPATH
 export PYTHONPATH=/path/to/pgnc-external-stack/python/bin/data-update:$PYTHONPATH
 ```
 
 **Test Failures**:
+
 ```bash
 # Run with verbose output for debugging
 pytest tests/ -v --tb=long
@@ -348,7 +364,7 @@ We welcome contributions to the Python components! Please follow these guideline
 
 ### Code Standards
 
-- **Python 3.8+** compatibility required
+- **Python 3.13+** compatibility required
 - **Type hints** mandatory for all functions and methods
 - **Docstrings** required for all public interfaces (Google style)
 - **95%+ test coverage** required for new code
@@ -367,7 +383,7 @@ We welcome contributions to the Python components! Please follow these guideline
 
 This project is licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0).
 
-### Key Points:
+### Key Points
 
 - **Source Code Availability**: Any modifications must be made available under the same license
 - **Network Use**: If you run modified code on a server, you must provide source code to users
