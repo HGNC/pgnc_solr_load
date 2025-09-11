@@ -5,6 +5,7 @@ This directory contains comprehensive unit tests for the PGNC external stack Pyt
 ## Overview
 
 The test suite provides comprehensive coverage for the core database functionality:
+
 - **DB Module**: Database configuration and package initialization
 - **Models**: SQLAlchemy ORM models and relationships
 - **Insert Classes**: Database insertion functionality
@@ -143,27 +144,32 @@ python -m pytest tests/enum_types/test_gene_status.py::TestGeneStatusEnum::test_
 Each enum class has its own comprehensive unit test suite that covers:
 
 #### Basic Functionality
+
 - Enum inheritance verification
 - Member existence validation
 - Value correctness
 - Name-value consistency
 
 #### Access Patterns
+
 - Access by name (`EnumClass['member_name']`)
 - Access by value (`EnumClass('member_value')`)
 - Membership testing (`member in EnumClass`)
 
 #### Iteration and Equality
+
 - Enum iteration behavior
 - Member equality and identity
 - String representation and repr
 
 #### Error Handling
+
 - Invalid member access
 - Immutability enforcement
 - Value uniqueness
 
 #### Advanced Features
+
 - Hashability (for use as dict keys and in sets)
 - Functional API compatibility
 - Serialization compatibility
@@ -192,6 +198,7 @@ The current test suite achieves **100% code coverage** for all enum modules:
 ### Comprehensive Enum Testing
 
 Each enum is tested for:
+
 - All standard enum behaviors
 - Python enum module compliance
 - Custom value handling
@@ -200,6 +207,7 @@ Each enum is tested for:
 ### Type Safety
 
 Tests ensure:
+
 - Enum members from different enums are distinct
 - Type checking works correctly
 - No inappropriate cross-enum equality
@@ -207,6 +215,7 @@ Tests ensure:
 ### Performance Testing
 
 Integration tests include:
+
 - Lookup performance validation
 - Memory usage patterns
 - Iteration consistency
@@ -214,6 +223,7 @@ Integration tests include:
 ### Real-world Usage Patterns
 
 Tests cover:
+
 - Dictionary usage as keys
 - Set operations
 - Filtering and mapping
@@ -232,6 +242,7 @@ When adding new enum types or modifying existing ones:
 ## Continuous Integration
 
 These tests are designed to be:
+
 - Fast-running (all tests complete in under 1 second)
 - Deterministic (no flaky tests)
 - Environment-independent
@@ -242,6 +253,7 @@ These tests are designed to be:
 ### Import Errors
 
 If you encounter import errors, ensure:
+
 1. You're running tests from the `python` directory
 2. The `conftest.py` file is properly setting up the Python path
 3. The enum modules exist in `bin/data-load/db/enum_types/`
@@ -253,6 +265,7 @@ The test suite uses `conftest.py` to automatically configure the Python path. If
 ### Coverage Issues
 
 To debug coverage issues:
+
 1. Use `--cov-report=html` to generate an HTML coverage report
 2. Check that all enum files are being imported correctly
 3. Verify that the coverage path matches your project structure

@@ -50,12 +50,13 @@ This directory contains comprehensive unit tests for all SQLAlchemy models in th
 ### Integration Tests
 
 **test_integration.py** - Cross-model validation tests (12 tests)
+
 - All models inherit from Base
 - Unique table names across all models
 - Primary key validation (single vs composite)
 - Foreign key relationship verification
 - Model instantiation capabilities
-- __repr__ method validation
+- **repr** method validation
 - Creation tracking field validation
 - Status field validation
 
@@ -69,6 +70,7 @@ This directory contains comprehensive unit tests for all SQLAlchemy models in th
 ## Test Categories
 
 ### Schema Validation Tests
+
 - Table name verification
 - Column existence and types
 - Primary key configuration
@@ -78,11 +80,13 @@ This directory contains comprehensive unit tests for all SQLAlchemy models in th
 - Default values
 
 ### Enum Testing
+
 - GeneStatusEnum (6 values)
 - BasicStatusEnum (3 values)
 - NomenclatureEnum (3 values)
 
 ### Data Validation Tests
+
 - Field assignment and retrieval
 - Enum value validation
 - String format validation (emails, accessions)
@@ -90,6 +94,7 @@ This directory contains comprehensive unit tests for all SQLAlchemy models in th
 - Edge case handling
 
 ### Relationship Testing
+
 - One-to-many relationships
 - Many-to-one relationships
 - Back reference validation
@@ -114,6 +119,7 @@ python -m pytest tests/models/test_integration.py -v
 ## Test Configuration
 
 The model tests use a specialized `conftest.py` file that:
+
 - Sets up proper import paths for the db.models modules
 - Clears any mock modules that might interfere with real imports
 - Allows the tests to import actual SQLAlchemy model classes
@@ -121,6 +127,7 @@ The model tests use a specialized `conftest.py` file that:
 ## Models Tested
 
 Core Models:
+
 - Base (declarative base)
 - Gene
 - Symbol
@@ -128,6 +135,7 @@ Core Models:
 - Location
 
 Relationship Models:
+
 - GeneHasSymbol
 - GeneHasName
 - GeneHasLocation
@@ -137,6 +145,7 @@ Relationship Models:
 - AssemblyHasLocation
 
 Lookup Models:
+
 - Assembly
 - ExternalResource
 - LocusGroup
@@ -149,6 +158,7 @@ Lookup Models:
 ## Test Patterns
 
 The tests follow consistent patterns:
+
 1. **Inheritance testing** - Verify all models inherit from Base
 2. **Table structure testing** - Validate table names and column definitions
 3. **Type validation** - Ensure column types match specifications
@@ -160,6 +170,7 @@ The tests follow consistent patterns:
 ## Future Enhancements
 
 Potential areas for expansion:
+
 - Database constraint violation testing
 - Performance testing for large datasets
 - Migration testing

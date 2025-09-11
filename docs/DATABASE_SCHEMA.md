@@ -119,6 +119,7 @@ CREATE INDEX idx_gene_created_by ON gene(created_by);
 ```
 
 **Key Fields:**
+
 - `primary_id`: Unique identifier within source (e.g., "Phytozome.1.1")
 - `primary_id_source`: Source database identifier (e.g., "phytozome")
 - `status`: Gene approval status (internal, approved, withdrawn)

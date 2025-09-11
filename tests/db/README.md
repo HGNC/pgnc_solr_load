@@ -38,6 +38,7 @@ This directory contains comprehensive unit tests for the `db` directory in the P
 ## Test Categories
 
 ### Configuration Testing
+
 - Environment variable parsing (DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
 - PostgreSQL URI construction
 - Partial configuration scenarios
@@ -45,6 +46,7 @@ This directory contains comprehensive unit tests for the `db` directory in the P
 - Special characters in configuration values
 
 ### Package Structure Testing
+
 - Import availability across modules
 - Class inheritance verification
 - Enum type validation
@@ -52,6 +54,7 @@ This directory contains comprehensive unit tests for the `db` directory in the P
 - Wildcard import functionality
 
 ### Integration Testing
+
 - Cross-module compatibility
 - Circular import prevention
 - Package consistency verification
@@ -61,6 +64,7 @@ This directory contains comprehensive unit tests for the `db` directory in the P
 ## Test Configuration
 
 The db tests use a specialized `conftest.py` file that:
+
 - Sets up proper import paths for the db modules
 - Clears mock modules that might interfere with real imports
 - Allows tests to import actual database configuration and model classes
@@ -127,18 +131,21 @@ python -m pytest tests/db/test_integration.py -v
 ## Key Features
 
 ### Comprehensive Configuration Testing
+
 - Tests all environment variable scenarios
 - Validates PostgreSQL URI generation
 - Handles edge cases and error conditions
 - Tests module reload behavior for dynamic configuration
 
 ### Package Structure Validation
+
 - Verifies all expected classes are available
 - Tests inheritance hierarchies
 - Validates enum implementations
 - Ensures consistent import behavior
 
 ### Integration Assurance
+
 - Prevents circular import issues
 - Validates cross-module compatibility
 - Tests SQLAlchemy integration
@@ -147,6 +154,7 @@ python -m pytest tests/db/test_integration.py -v
 ## Environment Variables Tested
 
 The configuration tests validate handling of these environment variables:
+
 - `DB_USER` - Database username
 - `DB_PASSWORD` - Database password
 - `DB_HOST` - Database host
@@ -164,6 +172,7 @@ The configuration tests validate handling of these environment variables:
 ## Dependencies
 
 The tests depend on:
+
 - `pytest` - Testing framework
 - `unittest.mock` - Environment variable mocking
 - `sqlalchemy` - Database ORM integration
@@ -172,6 +181,7 @@ The tests depend on:
 ## Future Enhancements
 
 Potential improvements to the test suite:
+
 1. **Performance Testing** - Add tests for configuration loading performance
 2. **Security Testing** - Add tests for handling sensitive configuration data
 3. **Database Connection Testing** - Add tests that verify actual database connectivity
@@ -183,20 +193,24 @@ Potential improvements to the test suite:
 Common issues and solutions:
 
 ### Import Errors
+
 - Ensure the `conftest.py` file is properly setting up import paths
 - Check that the data-load directory structure is correct
 
 ### Environment Variable Issues
+
 - Tests manipulate environment variables and reload modules
 - Ensure proper cleanup in test teardown
 
 ### Mock Conflicts
+
 - The db tests clear mocks from other test suites
 - Ensure proper test isolation between different test directories
 
 ## Related Test Suites
 
 This test suite complements:
+
 - **tests/models/** - SQLAlchemy model testing (121 tests)
 - **tests/insert/** - Insert functionality testing
 - **tests/enum_types/** - Enum type testing
