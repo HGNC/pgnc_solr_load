@@ -16,6 +16,15 @@ addopts = "-v --tb=short"
 requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools_scm]
+
+[tool.setuptools.packages.find]
+where = ["bin"]
+include = ["*"]
+
+[tool.setuptools]
+package-dir = {"" = "bin"}
+
 [project]
 name = "pgnc-data-load"
 dynamic = ["version"]
