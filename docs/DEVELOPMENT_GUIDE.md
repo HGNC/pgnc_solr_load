@@ -13,24 +13,27 @@ Before starting development, ensure you have:
 - **Python 3.13+** installed
 - **Git** for version control
 - **PostgreSQL 13+** database access
-- **Apache Solr 8+** instance
+- **Apache Solr 9.9.0** instance
 - **IDE** with Python support (VS Code recommended)
 
 ### Environment Setup
 
 1. **Clone the Repository**
+
    ```bash
    git clone https://github.com/HGNC/pgnc-external-stack.git
    cd pgnc-external-stack/python
    ```
 
 2. **Create Virtual Environment**
+
    ```bash
    python -m venv .venv
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 
 3. **Install Dependencies**
+
    ```bash
    # Install all dependencies including development tools
    pip install -r requirements.txt
@@ -40,6 +43,7 @@ Before starting development, ensure you have:
    ```
 
 4. **Configure IDE (VS Code)**
+
    ```bash
    # Install recommended extensions
    code --install-extension ms-python.python
@@ -50,6 +54,7 @@ Before starting development, ensure you have:
    ```
 
 5. **Set Up Environment Variables**
+
    ```bash
    # Copy example environment file
    cp ../.env.example .env
@@ -445,6 +450,7 @@ Follow **Conventional Commits** specification:
 ```
 
 Examples:
+
 ```bash
 feat(data-load): add support for new CSV format
 fix(solr): resolve connection timeout issues
@@ -516,6 +522,7 @@ jobs:
 #### 2. Quality Gates
 
 All PRs must pass:
+
 - ✅ Type checking (Pylance)
 - ✅ Test suite (100% pass rate)
 - ✅ Coverage threshold (95%+)

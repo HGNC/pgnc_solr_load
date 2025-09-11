@@ -105,7 +105,7 @@ DB_NAME=pgnc_database
 - Python 3.13 or higher (tested with 3.13.2)
 - pip (Python package installer)
 - Access to PostgreSQL 17.0 database
-- Access to Apache Solr 8.x instance
+- Access to Apache Solr 9.9.0 instance
 
 ### Setup
 

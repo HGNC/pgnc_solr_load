@@ -85,7 +85,7 @@ Gene (1) ←→ (M) GeneHasXref ←→ (1) Xref
 | **Python** | 3.13+ | Core programming language |
 | **SQLAlchemy** | 2.0.38 | Database ORM and toolkit |
 | **PostgreSQL** | 13+ | Primary data storage |
-| **Apache Solr** | 8+ | Search indexing |
+| **Apache Solr** | 9.9.0 | Search indexing |
 | **Pandas** | 2.2.3 | Data manipulation |
 | **pytest** | 8.4.1 | Testing framework |
 
@@ -136,18 +136,20 @@ python/
 
 - Python 3.13 or higher
 - PostgreSQL 13+ database
-- Apache Solr 8+ instance
+- Apache Solr 9.9.0 instance
 - Access to gene nomenclature CSV data
 
 ### Installation
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/HGNC/pgnc-external-stack.git
    cd pgnc-external-stack/python
    ```
 
 2. **Set up Python environment**:
+
    ```bash
    python -m venv .venv
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
@@ -155,6 +157,7 @@ python/
    ```
 
 3. **Configure environment variables**:
+
    ```bash
    # Copy example environment file
    cp ../.env.example .env
