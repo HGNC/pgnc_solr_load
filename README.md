@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![pytest](https://img.shields.io/badge/pytest-8.4+-green.svg)](https://pytest.org/)
-[![Coverage](https://img.shields.io/badge/coverage-95%2B-brightgreen.svg)](./htmlcov/index.html)
+[![Coverage](https://img.shields.io/badge/coverage-95%2B-brightgreen.svg)](./htmlcov/index.html) <!-- markdown-link-check-disable-line (generated locally) -->
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 ## Overview
