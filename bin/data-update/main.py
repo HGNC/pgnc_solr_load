@@ -287,7 +287,12 @@ def __create_solr_json() -> str:
         solr_json = json.dumps(solr_dicts, indent=4)
         return solr_json
     except SolrUpdateError as error:
-        raise SolrUpdateError(f"Function: create_solr_json Error: {error}")
+        conn_properties = "Connection Properties are as follows:\n"
+        conn_properties += f"    User: {os.environ['DB_USER']}\n"
+        conn_properties += f"    Host: {os.environ['DB_HOST']}\n"
+        conn_properties += f"    Port: {os.environ['DB_PORT']}\n"
+        conn_properties += f"    Database: {os.environ['DB_NAME']}\n"
+        raise SolrUpdateError(f"Function: create_solr_json Error: {error}\n{conn_properties}")
     finally:
         # closing database connection.
         if connection:
