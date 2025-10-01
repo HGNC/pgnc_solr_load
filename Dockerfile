@@ -30,4 +30,9 @@ RUN mkdir -p /usr/src/app/output && \
     mkdir -p /usr/src/app/input && \
     mkdir -p /usr/src/app/db-data
 
-CMD ["sh", "-c", "/usr/src/app/bin/update.sh"]
+# Copy and make the wait script executable
+COPY bin/wait-for-db.sh /usr/src/app/bin/wait-for-db.sh
+RUN chmod +x /usr/src/app/bin/wait-for-db.sh
+
+# Use the wait script as the entry point
+CMD ["sh", "-c", "/usr/src/app/bin/wait-for-db.sh"]
