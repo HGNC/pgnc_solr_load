@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![pytest](https://img.shields.io/badge/pytest-8.4+-green.svg)](https://pytest.org/)
-[![Coverage](https://img.shields.io/badge/coverage-95%2B-brightgreen.svg)](./htmlcov/index.html) <!-- markdown-link-check-disable-line (generated locally) -->
+[![Coverage](https://img.shields.io/badge/coverage-95%2B-brightgreen.svg)](./TESTING_SUMMARY.md) <!-- markdown-link-check-disable-line (generated locally) -->
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 ## Overview
@@ -22,15 +22,15 @@ The Python components of the PGNC External Stack provide essential data processi
 ```
 python/
 ├── bin/                    # Executable scripts and utilities
-│   ├── data-load/         # Gene data import from CSV to database
-│   ├── data-update/       # Solr index synchronization with database
-│   └── update.sh          # Update orchestration script
-├── tests/                 # Comprehensive test suites
-│   ├── data-load/        # Tests for data loading functionality
-│   └── data-update/      # Tests for Solr update functionality
-├── input/                # Input data files (CSV, etc.)
-├── output/               # Generated output files (JSON, logs)
-└── htmlcov/             # Test coverage reports
+│   ├── data-load/          # Gene data import from CSV to database
+│   ├── data-update/        # Solr index synchronization with database
+│   └── update.sh           # Update orchestration script
+├── tests/                  # Comprehensive test suites and fixtures
+├── input/                  # Input data files (CSV, etc.)
+├── output/                 # Generated output files (JSON, logs)
+├── requirements.txt        # Primary dependency locklist
+├── pyproject.toml          # Packaging metadata for data-load
+└── run_tests.py            # Helper script to run pytest locally
 ```
 
 ## Components
@@ -133,7 +133,7 @@ pip install -r requirements.txt
 
 ```bash
 # Copy and edit environment variables
-cp ../.env.example .env
+cp ../sample.env .env
 # Edit .env with your database and Solr configurations
 ```
 
@@ -143,6 +143,11 @@ cp ../.env.example .env
 
 - **psycopg2-binary** (2.9.10): PostgreSQL database adapter
 - **pysolr** (3.10.0): Apache Solr client library
+- **requests** (2.32.3): HTTP client for Solr and health checks
+- **urllib3** (2.3.0): HTTP connection pooling used by requests
+- **certifi** (2024.12.14): Certificate bundle for HTTPS requests
+- **charset-normalizer** (3.4.1) & **idna** (3.10): Text encoding helpers for requests
+- **setuptools** (75.8.0): Packaging support for the data-load project
 - **pandas** (2.2.3): Data manipulation and analysis
 - **SQLAlchemy** (2.0.38): Database ORM and toolkit
 - **numpy** (2.2.3): Numerical computing support
@@ -151,18 +156,18 @@ cp ../.env.example .env
 
 - **pytest** (8.4.1): Testing framework
 - **pytest-cov** (6.2.1): Coverage reporting
-- **pytest-mock** (3.15.0): Mocking utilities
+- **pytest-mock** (>=3.14.1): Mocking utilities (pinned to 3.15.0 for packaged builds)
 
 ## Testing
 
 ### Test Coverage
 
-The Python components maintain **95%+ test coverage** across all modules:
+The Python components maintain **95%+ test coverage** across a suite of 313 automated tests:
 
-- **Data Load Tests**: 15 comprehensive test cases
-- **Data Update Tests**: 19 comprehensive test cases  
-- **Gene Model Tests**: 11 detailed validation tests
-- **Integration Tests**: End-to-end workflow validation
+- **DB Module**: 29 tests covering configuration, initialization, and integration
+- **Models**: 121 tests validating SQLAlchemy models and relationships
+- **Insert Operations**: 111 tests verifying loaders and transactional workflows
+- **Enum Types**: 52 tests ensuring nomenclature enums stay consistent
 
 ### Running Tests
 
@@ -185,15 +190,14 @@ pytest tests/ --cov=bin --cov-report=term-missing
 
 ```
 tests/
-├── data-load/
-│   ├── test_main.py           # Main functionality tests
-│   ├── test_csv_parsing.py    # CSV parsing validation
-│   ├── test_database_ops.py   # Database operation tests
-│   └── conftest.py           # Test fixtures and configuration
-└── data-update/
-    ├── test_main.py           # Solr update functionality
-    ├── test_gene_model.py     # Gene model validation
-    └── conftest.py           # Test fixtures and mocks
+├── db/                        # Database configuration and integration tests
+├── enum_types/                # Enum validation suites
+├── insert/                    # Data insertion workflow tests
+├── models/                    # SQLAlchemy model coverage
+├── data-load/                 # CSV import orchestration tests
+├── data-update/               # Solr synchronization tests
+├── conftest.py                # Shared pytest fixtures and helpers
+└── README.md                  # Test suite documentation and metrics
 ```
 
 ## Development
@@ -242,7 +246,7 @@ The project maintains high code quality standards:
 | `input/` | CSV files for data loading | Place source data files here |
 | `output/` | Generated JSON and log files | Solr JSON exports and processing logs |
 | `tests/` | Test suites and fixtures | Comprehensive test coverage |
-| `htmlcov/` | Coverage reports | Generated by pytest-cov |
+| `run_tests.py` | Local test runner helper | Wraps `pytest` with default flags |
 
 ## Data Flow
 
